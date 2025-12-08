@@ -15,124 +15,46 @@ import SideBar from '@renderer/components/sidebar/SideBar.vue';
 import * as echarts from 'echarts';
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import type { EChartsType } from 'echarts';
-
 import chinaJson from '@/assets/map/china.json';
 
-// 图表引用，使用正确的类型
 const chartRef = ref<HTMLElement | null>(null);
 let myChart: EChartsType | null = null;
 
-// 模拟校友会数据
-const alumniData = [
-  { 
-    name: '北京地区校友分会', 
-    from: [116.407526, 39.90403],
-    to: [135.00, 39.90403],
-    align: 'right'
-  },
-  { 
-    name: '长三角校友分会', 
-    from: [120.473701, 30.230416],
-    to: [135.00, 30.230416],
-    align: 'right'
-  },
-  { 
-    name: '广州校友分会', 
-    from: [113.2644, 23.0],
-    to: [90.00, 23.0],
-    align: 'left'
-  },
-  { 
-    name: '吴川校友分会', 
-    from: [110.7782, 21.1] ,
-    to: [133.1821, 21.1],
-    align: 'right'
-  },
-  { 
-    name: '普宁校友分会', 
-    from: [116.1657, 25.9] ,
-    to: [98.00, 25.9],
-    align: 'left'
-  },
-  { 
-    name: '大潮阳校友分会', 
-    from: [116.6016, 23.2649] ,
-    to: [133.1821, 23.2649],
-    align: 'right'
-  },
-  { 
-    name: '饶平校友分会', 
-    from: [117.0039, 24.2] ,
-    to: [120.00, 24.2],
-    align: 'right'
-  },
-  { 
-    name: '紫金校友分会', 
-    from: [115.1821, 24.8] ,
-    to: [133.1821, 24.8],
-    align: 'right'
-  },
-  { 
-    name: '兴宁校友分会', 
-    from: [115.7312, 27.1365] ,
-    to: [135.00, 27.1365],
-    align: 'right'
-  },
-  { 
-    name: '惠来校友分会', 
-    from: [116.3007, 23.8] ,
-    to: [103.00, 23.8],
-    align: 'left'
-  },
-  { 
-    name: '四川校友分会', 
-    from: [104.0757, 31.8] ,
-    to: [91.00, 31.8],
-    align: 'left'
-  },
-  { 
-    name: '西藏校友分会', 
-    from: [91.1174, 29.6472] ,
-    to: [81.00, 29.6472],
-    align: 'left'
-  },
-  { 
-    name: '香港校友联谊会', 
-    from: [114.1694, 22.0] ,
-    to: [105, 22.0],
-    align: 'left'
-  },
-  { 
-    name: '东莞校友分会', 
-    from: [113.7518, 22.6] ,
-    to: [114.00, 22.6],
-    align: 'right'
-  },
-  { 
-    name: '河南校友分会', 
-    from: [113.7532, 34.7657] ,
-    to: [120.0000, 34.7657],
-    align: 'right'
-  },
-  { 
-    name: '喀什校友联谊会', 
-    from: [75.9938, 39.4677] ,
-    to: [72.9938, 39.4677],
-    align: 'left'
-  },
+// 定义需要“扎堆”处理的校友会名称列表
+const clusteredNames = [
+  '普宁校友分会', '大潮阳校友分会', '饶平校友分会', 
+  '紫金校友分会', '惠来校友分会', '东莞校友分会',
+  '兴宁校友分会', '广州校友分会', '吴川校友分会',
+  '香港校友联谊会'
 ];
 
-// 拆分echart需要的数据，名字和坐标一组，坐标前后一组，名字，终点位置，左右一组
-// const scatterData = alumniData.map(item => ({
-//   name: item.name,
-//   value: item.from
-// }));
+const alumniData = [
+  { name: '北京地区校友分会', from: [116.407526, 39.90403], to: [135.00, 39.90403], align: 'right' },
+  { name: '长三角校友分会', from: [120.473701, 30.230416], to: [135.00, 30.230416], align: 'right' },
+  { name: '广州校友分会', from: [113.2644, 23.1291], to: [135.00, 23.1291], align: 'right' },
+  { name: '吴川校友分会', from: [110.7782, 21.4418], to: [133.1821, 21.4418], align: 'right' },
+  { name: '普宁校友分会', from: [116.1657, 23.2973], to: [98.00, 23.2973], align: 'left' },
+  { name: '大潮阳校友分会', from: [116.6016, 23.2649], to: [133.1821, 23.2649], align: 'right' },
+  { name: '饶平校友分会', from: [117.0039, 23.6641], to: [120.00, 23.6641], align: 'right' },
+  { name: '紫金校友分会', from: [115.1821, 23.6384], to: [133.1821, 23.6384], align: 'right' },
+  { name: '兴宁校友分会', from: [115.7312, 24.1365], to: [135.00, 24.1365], align: 'right' },
+  { name: '惠来校友分会', from: [116.3007, 23.0332], to: [103.00, 23.0332], align: 'left' },
+  { name: '四川校友分会', from: [104.0757, 31.8], to: [91.00, 31.8], align: 'left' },
+  { name: '西藏校友分会', from: [91.1174, 29.6472], to: [81.00, 29.6472], align: 'left' },
+  { name: '香港校友联谊会', from: [114.1694, 22.18], to: [105, 22.18], align: 'left' },
+  { name: '东莞校友分会', from: [113.7518, 23.0207], to: [114.00, 23.0207], align: 'right' },
+  { name: '河南校友分会', from: [113.7532, 34.7657], to: [120.0000, 34.7657], align: 'right' },
+  { name: '喀什校友联谊会', from: [75.9938, 39.4677], to: [72.9938, 39.4677], align: 'left' },
+];
 
-const linesData = alumniData.map(item => ({
+// 数据过滤：只保留不在扎堆列表中的数据用于常规显示
+const normalData = alumniData.filter(item => !clusteredNames.includes(item.name));
+
+const linesData = normalData.map(item => ({
   coords: [item.from, item.to]
 }));
 
-const labelData = alumniData.map(item => ({
+const labelData = normalData.map(item => ({
   name: item.name,
   value: item.to,
   label: {
@@ -140,62 +62,168 @@ const labelData = alumniData.map(item => ({
   }
 }));
 
-// 初始化图表
+// 计算自定义图形的配置
+const getGraphicOption = () => {
+  if (!myChart) return [];
+
+  // 定义扎堆区域的地理范围 (广东东部及珠三角大致范围)
+  // 左上角 [经度, 纬度] 和 右下角 [经度, 纬度]
+  const clusterGeoRect = {
+    topLeft: [112.5, 24.5], 
+    bottomRight: [117.5, 21.5] 
+  };
+
+  // 将地理坐标转换为屏幕像素坐标
+  const p1 = myChart.convertToPixel('geo', clusterGeoRect.topLeft);
+  const p2 = myChart.convertToPixel('geo', clusterGeoRect.bottomRight);
+
+  // 如果转换失败（地图未渲染完成），返回空
+  if (!p1 || !p2) return [];
+
+  const rectX = p1[0];
+  const rectY = p1[1];
+  const rectW = p2[0] - p1[0];
+  const rectH = p2[1] - p1[1];
+
+  // 列表框双列布局
+  const singleColWidth = 120; // 单列文字预留宽度
+  const padding = 10; // 边框内边距
+  const gap = 10;
+  const lineHeight = 30;
+  const totalCount = clusteredNames.length;
+  const rows = Math.ceil(totalCount / 2); // 左边5个，右边5个
+
+  // 列表框的长度和宽度
+  const listBoxWidth = singleColWidth * 2 + padding * 2 + gap;
+  const listBoxHeight = rows * lineHeight + padding * 2;
+  const guideLineLength = 160; // 引导线长度
+
+  // 列表框位置：在地图框的左侧
+  // 计算逻辑：地图框左边X - 引导线长 - 列表框宽
+  const listBoxX = rectX - guideLineLength - listBoxWidth;
+  // 列表框Y轴：垂直居中于地图框
+  const listBoxY = rectY + (rectH / 2) - (listBoxHeight / 2) + 50;
+
+  // 生成双列文字元素列表
+  const textElements = clusteredNames.map((name, index) => {
+    const isSecondCol = index >= rows; // 超过行数上限就进入第二列
+    const rowIndex = index % rows;
+    const currentTextX = isSecondCol
+    ? listBoxX + padding + singleColWidth + gap
+    : listBoxX + padding;
+    const currentTextY = listBoxY + padding + rowIndex * lineHeight + 10;
+
+    return {
+      type: 'text',
+      z: 999, // 层级置顶
+      left: currentTextX,
+      top: currentTextY,
+      style: {
+        text: name,
+        fill: '#FFFFFF',
+        font: 'bold 16px "Songti SC", serif',
+        width: singleColWidth, // 限制宽度
+        overflow: 'truncate',  // 如果名字太长就截断
+        textVerticalAlign: 'middle', // 垂直居中，水平居左
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowBlur: 2,
+        textShadowOffsetX: 1,
+        textShadowOffsetY: 1
+      }
+    };
+  });
+
+  return [
+    // 1. 地图上的框（圈住扎堆区域）
+    {
+      type: 'rect',
+      z: 999, // 层级置顶
+      shape: { x: rectX, y: rectY, width: rectW, height: rectH },
+      style: {
+        stroke: '#FFFFFF',
+        fill: 'rgba(255, 255, 255, 0.1)', // 淡淡的白色填充
+        lineWidth: 2,
+        lineDash: [0]
+      }
+    },
+    // 2. 引导线
+    {
+      type: 'polyline',
+      z: 999, // 层级置顶
+      shape: {
+        points: [
+          [rectX, rectY + rectH / 2], // 起点：地图框左侧中间
+          [rectX - guideLineLength, rectY + rectH / 2] // 终点：向左延伸
+        ]
+      },
+      style: {
+        stroke: '#FFFFFF',
+        lineWidth: 2
+      }
+    },
+    // 3. 列表框容器
+    {
+      type: 'rect',
+      z: 999, //层级置顶
+      shape: {
+        x: listBoxX,
+        y: listBoxY,
+        width: listBoxWidth,
+        height: listBoxHeight,
+        r: 4 // 圆角
+      },
+      style: {
+        stroke: '#FFFFFF',
+        fill: 'rgba(255, 255, 255, 0.15)',
+        // fill: 'rgba(0, 0, 0, 0.5)', // 半透明黑色背景，确保文字清晰
+        lineWidth: 2
+      }
+    },
+    // 4. 列表文字
+    ...textElements
+  ];
+};
+
 const initChart = () => {
   if (!chartRef.value) return;
-  
-  // 注册中国地图数据
   echarts.registerMap('china', chinaJson);
-  
-  // 初始化图表实例
   myChart = echarts.init(chartRef.value);
 
-  // 配色
   const colors = {
-    type: 'linear',
-    x:0, y:0, x2:0, y2:1,
+    type: 'linear', x:0, y:0, x2:0, y2:1,
     colorStops: [
-      { offset: 0, color: '#FFFFFF' },    // 0% 顶部纯白
-      { offset: 0.3, color: '#F2A8C1' },  // 60% 位置是粉色（保持中间透亮）
-      { offset: 1, color: '#FF0055' }     // 100% 底部是非常深的暗红（增加厚重感）
+      { offset: 0, color: '#FFFFFF' },
+      { offset: 0.3, color: '#F2A8C1' },
+      { offset: 1, color: '#FF0055' }
     ],
     global: false
   };
   
-  // 配置图表选项
   const option = {
     backgroundColor: 'transparent',
-
     geo: {
       map: 'china',
       roam: false,
       zoom: 1.3,
       layoutCenter: ['47%', '65%'],
       layoutSize: '100%',
-
-      // 3D效果和渐变色
       itemStyle: {
         areaColor: colors,
-        // 阴影效果
-        shadowColor: '#8B1A38', // 深红色阴影，模拟侧面厚度
-        shadowOffsetX: -1,       // X轴偏移
-        shadowOffsetY: 20,      // Y轴偏移（向下偏移产生厚度感）
-        shadowBlur: 0,           // 模糊度设为0，这就变成了硬朗的“立体块”
-
+        shadowColor: '#8B1A38',
+        shadowOffsetX: -1,
+        shadowOffsetY: 20,
+        shadowBlur: 0,
         borderColor: '#ffffff',
         borderWidth: 2,
       },
-
-      // 【关键修改】：高亮状态也引用同一个颜色对象
       emphasis: {
-        itemStyle: {
-          areaColor: colors,
-        },
+        itemStyle: { areaColor: colors },
         label: { show: false }
       }
     },
+    // 初始化时 graphic 为空，需要在 setOption 后或 resize 中计算
+    graphic: [], 
     series: [
-      // 画线条
       {
         type: 'lines',
         coordinateSystem: 'geo',
@@ -203,56 +231,64 @@ const initChart = () => {
         z: 2,
         lineStyle: {
           color: '#FFFFFF',
-          width: 2, // 线条粗细
+          width: 2,
           opacity: 0.7,
-          curveness: 0 // 0表示直线，如果不为0则是曲线
+          curveness: 0
         },
-        data: linesData
+        data: linesData // 使用过滤后的数据
       },
-      // 3. 终点文字层（隐形点 + 显示文字）
       {
         type: 'scatter',
         coordinateSystem: 'geo',
         zlevel: 1,
         z: 3,
-        data: labelData,
-        symbolSize: 0, // 设为0，也就是点本身不显示
+        data: labelData, // 使用过滤后的数据
+        symbolSize: 0,
         label: {
           show: true,
-          formatter: '{b}', // 显示数据项名称
+          formatter: '{b}',
           color: '#FFFFFF',
           fontSize: 22,
           fontWeight: "bolder",
-          fontFamily: 'Songti SC, serif', // 宋体风格
-          textBorderColor: '#FFFFFF', // 边框颜色 = 字体颜色
-          textBorderWidth: 0.4,       // 描边宽度：值越大字越粗（0.5 - 2 之间调整）
-          distance: 10 // 文字距离线头的距离
+          fontFamily: 'Songti SC, serif',
+          textBorderColor: '#FFFFFF',
+          textBorderWidth: 0.4,
+          distance: 10
         }
       }
     ]
   };
   
-  // 设置配置项
   myChart.setOption(option);
+
+  // 必须在 setOption 之后，地图渲染有了坐标系，才能计算像素坐标
+  updateGraphic();
 }
 
-// 调整图表尺寸
-const resizeChart = () => {
+// 独立的更新图形函数
+const updateGraphic = () => {
   if (myChart) {
-    myChart.resize();
+    myChart.setOption({
+      graphic: getGraphicOption()
+    });
   }
 }
 
-// 组件挂载时初始化图表
+const resizeChart = () => {
+  if (myChart) {
+    myChart.resize();
+    // 窗口大小改变后，像素坐标变了，需要重新计算绘制
+    updateGraphic();
+  }
+}
+
 onMounted(() => {
   nextTick(() => {
     initChart();
-    // 监听窗口大小变化
     window.addEventListener('resize', resizeChart);
   });
 });
 
-// 组件卸载时清理资源
 onUnmounted(() => {
   if (myChart) {
     myChart.dispose();
