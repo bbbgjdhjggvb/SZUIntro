@@ -58,6 +58,13 @@ const routes: RouteRecordRaw[] = [
                 meta: { layout: 'BasicLayout' } // 标记：使用通用布局
             },
             {
+                // 学院校友会 - 详情页
+                path: 'college-detail',
+                name: 'CollegeDetail',
+                component: () => import('@/views/CollegeDetail.vue'),
+                meta: { layout: 'BasicLayout' }
+            },
+            {
                 // 杰出校友
                 path: 'outstanding',
                 name: 'Outstanding',

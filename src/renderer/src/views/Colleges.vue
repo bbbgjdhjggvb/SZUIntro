@@ -13,7 +13,7 @@
             :span="8"
             class="col-item"
           >
-            <div class="img-card">
+            <div class="img-card" @click="goToDetail(college)">
               <el-image
                 :src="college.image"
                 fit="cover"
@@ -38,9 +38,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import SideBar from '@renderer/components/sidebar/SideBar.vue'
 
+const router = useRouter() // 獲取 router 實例
+
 interface College {
+
   id: number
   name: string
   description: string
@@ -68,6 +72,17 @@ onMounted(async () => {
     console.error('Failed to load colleges data:', error)
   }
 })
+
+// 跳轉詳情頁
+const goToDetail = (college: College) => {
+  router.push({
+    name: 'CollegeDetail',
+    query: {
+      name: college.name,
+      image: college.image // 注意：這裡是已經轉換過後的 base64 或 協議路徑，如果太長可能需要考慮 id
+    }
+  })
+}
 </script>
 
 <style scoped>
@@ -92,6 +107,7 @@ onMounted(async () => {
 
 /* 右侧内容滚动区域 */
 .box-content-scroll {
+  flex: 1; /* fix: 讓它佔據剩餘空間，避免初始加載時寬度塌縮 */
   height: 100%;
   padding: 20px;
   margin-right: 120px;
@@ -136,7 +152,13 @@ onMounted(async () => {
   aspect-ratio: 16 / 9;
   border-radius: 6px;
   overflow: hidden;
+  overflow: hidden;
   cursor: pointer;
+  transition: transform 0.3s ease; /* 添加點擊反饋 */
+}
+
+.img-card:active {
+  transform: scale(0.98);
 }
 
 .college-img{

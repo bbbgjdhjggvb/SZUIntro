@@ -39,6 +39,7 @@ const currentPageText = computed(() => {
         'Association': '校友总会',
         'Distribution': '校友会分布',
         'Colleges': '学院校友会',
+        'CollegeDetail': '校友会介绍',
         'Outstanding': '杰出校友',
         'Gallery': '校友图册'
     }
