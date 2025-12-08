@@ -15,7 +15,8 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('fileReadApi', {
     readConfigFile: () => ipcRenderer.invoke('read-config-file'),
     readImage:(imageName:string) => ipcRenderer.invoke('read-image', imageName),
-    getImageFilesInDir:(dirpath:string) => ipcRenderer.invoke('get-image-files-in-dir', dirpath)
+    getImageFilesInDir:(dirpath:string) => ipcRenderer.invoke('get-image-files-in-dir', dirpath),
+    readConfigFileAccorName: (file:string)=> ipcRenderer.invoke('read-config-file-accor-name', file),
     })
   } catch (error) {
     console.error(error)

@@ -12,6 +12,7 @@ declare global {
     api: unknown
     fileReadApi: {
       readConfigFile:() => Promise<any | null>,
+      readConfigFileAccorName: () => Promise<any | null>,
       readImage:(imageName:string) => Promise<string | null>
       getImageFilesInDir:(dirpath:string) => Promise<PhotoItem[]>
     }
