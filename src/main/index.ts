@@ -83,6 +83,18 @@ ipcMain.handle('read-config-file', async(_event) =>{
   }
 })
 
+// IPC ：读取json文件
+ipcMain.handle('read-config-file-accor-name', async(_event, file: string) =>{
+   try {
+    const configPath = join(getDynamicAssetsPath(), 'data', file);
+    const configData = readFileSync(configPath, 'utf-8');
+    return JSON.parse(configData);
+  } catch (error) {
+    console.error(`Error reading dynamic config data.json:`, error);
+    return null;
+  }
+})
+
 // IPC 处理器：读取图片文件（返回 Base64 编码）
 ipcMain.handle('read-image', async (_event, imageName: string) => {
   try {

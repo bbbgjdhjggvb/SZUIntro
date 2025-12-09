@@ -26,7 +26,8 @@ const currentBG = computed(()=>{
         'Distribution': distributionGB,
         'Colleges': bg,
         'Oustanding': bg,
-        'Gallery': bg
+        'Gallery': bg,
+        'XYHDetail': distributionGB
     }
 
     return bGMap[route.name as string] || bg
@@ -41,7 +42,8 @@ const currentPageText = computed(() => {
         'Colleges': '学院校友会',
         'CollegeDetail': '校友会介绍',
         'Outstanding': '杰出校友',
-        'Gallery': '校友图册'
+        'Gallery': '校友图册',
+        'XYHDetail': '校友分会介绍'
     }
 
     return map[route.name as string] || '首页';
