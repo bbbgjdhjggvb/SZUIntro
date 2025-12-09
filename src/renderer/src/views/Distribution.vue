@@ -15,7 +15,11 @@ import SideBar from '@renderer/components/sidebar/SideBar.vue';
 import * as echarts from 'echarts';
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import type { EChartsType } from 'echarts';
+import { useRouter } from 'vue-router';
+
 import chinaJson from '@/assets/map/china.json';
+
+const router = useRouter();
 
 const chartRef = ref<HTMLElement | null>(null);
 let myChart: EChartsType | null = null;
@@ -129,6 +133,9 @@ const getGraphicOption = () => {
         textShadowBlur: 2,
         textShadowOffsetX: 1,
         textShadowOffsetY: 1
+      },
+      onclick: ()=>{
+        handleNavigation(name);
       }
     };
   });
@@ -183,6 +190,17 @@ const getGraphicOption = () => {
     ...textElements
   ];
 };
+
+// 跳转函数
+const handleNavigation = (name: string) => {
+  console.log('跳转详情：', name);
+  router.push({
+    name: 'XYHDetail',
+    params: {
+      name: name
+    }
+  })
+}
 
 const initChart = () => {
   if (!chartRef.value) return;
@@ -244,6 +262,7 @@ const initChart = () => {
         z: 3,
         data: labelData, // 使用过滤后的数据
         symbolSize: 0,
+        slient: false, // 允许散点响应鼠标点击
         label: {
           show: true,
           formatter: '{b}',
@@ -260,6 +279,13 @@ const initChart = () => {
   };
   
   myChart.setOption(option);
+
+  // 地图上散点响应鼠标点击事件
+  myChart.on('click', (parama) => {
+    if ( parama.componentType == 'series' && parama.seriesType === 'scatter'){
+      handleNavigation(parama.name)
+    }
+  })
 
   // 必须在 setOption 之后，地图渲染有了坐标系，才能计算像素坐标
   updateGraphic();

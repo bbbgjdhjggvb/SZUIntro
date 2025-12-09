@@ -34,44 +34,43 @@ const routes: RouteRecordRaw[] = [
                 path: '',
                 name: 'Home',
                 component: () => import('@/views/Home.vue'),
-                meta: { layout: 'BasicLayout' } // 标记：使用通用布局
             },
             {
                 // 校友总会
                 path: 'association',
                 name: 'Association',
                 component: () => import('@/views/Association.vue'),
-                meta: { layout: 'BasicLayout' } // 标记：使用通用布局
             },
             {
                 // 校友会分布
                 path: 'distribution',
                 name: 'Distribution',
                 component: () => import('@/views/Distribution.vue'),
-                meta: { layout: 'BasicLayout' } // 标记：使用通用布局
+            },
+            {
+                // 校友分会详情页面
+                path: 'distribution/detail/:name',
+                name: 'XYHDetail',
+                component: () => import('@/views/XYHDetail.vue'),
             },
             {
                 // 学院校友会
                 path: 'colleges',
                 name: 'Colleges',
                 component: () => import('@/views/Colleges.vue'),
-                meta: { layout: 'BasicLayout' } // 标记：使用通用布局
             },
             {
                 // 杰出校友
                 path: 'outstanding',
                 name: 'Outstanding',
                 component: () => import('@/views/Outstanding.vue'),
-                meta: { layout: 'BasicLayout' } // 标记：使用通用布局
             },
             {
                 // 校友图册
                 path: 'gallery',
                 name: 'Gallery',
                 component: () => import('@/views/Gallery.vue'),
-                meta: { layout: 'BasicLayout' } // 标记：使用通用布局
             }
-
         ]
     },
 ]
