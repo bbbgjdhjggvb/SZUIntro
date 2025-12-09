@@ -339,6 +339,16 @@ onUnmounted(() => {
   background: transparent;
   border-radius: 20px;
   flex-shrink: 0;
+  /**侧边栏动画 */
+  opacity: 0;
+  transform: translateX(-30px);
+  animation: slideInLeft 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: 0.2s; /* 等路由动画走一点再出来 */
+}
+
+/** 添加侧边栏过渡动画 */
+@keyframes slideInLeft {
+  to {opacity: 1; transform: translateX(0);}
 }
 
 .max-container{

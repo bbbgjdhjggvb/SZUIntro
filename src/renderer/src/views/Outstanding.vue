@@ -1,6 +1,6 @@
 <template>
   <div class="main-box">
-    <div class="box-sidebar">
+    <div class="box-sidebar slide-in-left">
       <SideBar theme="light"></SideBar>
     </div>
     <!-- 滚动窗口视图 -->
@@ -109,6 +109,16 @@ onMounted(async () => {
   top: 50%;
   background: transparent;
   border-radius: 20px;
+  /* 侧边栏动画初始状态 */
+  opacity: 0; 
+  transform: translateX(-30px);
+  animation: slideInLeft 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: 0.2s; /* 等路由动画走一点再出来 */
+}
+
+/* 侧边栏进入动画关键帧 */
+@keyframes slideInLeft {
+  to { opacity: 1; transform: translateX(0); }
 }
 
 /** 隐藏滚动条，但是允许滑动 */

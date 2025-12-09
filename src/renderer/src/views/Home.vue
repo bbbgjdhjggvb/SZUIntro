@@ -47,7 +47,11 @@ const navItems = ref([
 ]);
 
 const handleNavClick = (path :string) => {
-  if (path) route.push(path);
+  if (path){
+    setTimeout(() => {
+      route.push(path);
+    }, 150);
+  }
 }
 </script>
 

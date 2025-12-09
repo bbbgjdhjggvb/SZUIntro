@@ -1,7 +1,7 @@
 <template>
   <div class="main-box">
     <!-- 侧边栏保持不变 -->
-    <div class="box-sidebar">
+    <div class="box-sidebar slide-in-left">
       <SideBar></SideBar>
     </div>
 
@@ -208,7 +208,22 @@ const handleYearClick = (index: number) => {
 }
 
 .main-box { width: 100%; height: 100%; display: flex; overflow: hidden; }
-.box-sidebar { width: 80px; flex-shrink: 0; }
+
+.box-sidebar { 
+  width: 80px; 
+  flex-shrink: 0; 
+  /* 侧边栏动画初始状态 */
+  opacity: 0; 
+  transform: translateX(-30px);
+  animation: slideInLeft 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: 0.2s; /* 等路由动画走一点再出来 */
+}
+
+/* 侧边栏进入动画关键帧 */
+@keyframes slideInLeft {
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .box-content-scroll { flex: 1; height: 100%; overflow: hidden; position: relative; margin-right: 130px; margin-left: 60px;}
 .gallery-timeline-view { display: flex; flex-direction: column; height: 100%; }
 
