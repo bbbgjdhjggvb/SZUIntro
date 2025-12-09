@@ -61,7 +61,7 @@ onMounted(async () => {
 
     // 并行处理图片数据
     const imgUrlProcTask = colleges.value.map(async (e) => {
-      const realImgUrl = await window.fileReadApi?.readImage(e.image)
+      const realImgUrl = 'local-image://' + e.image
       return {
         ...e,
         image: realImgUrl || ''

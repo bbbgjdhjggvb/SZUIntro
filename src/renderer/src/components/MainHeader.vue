@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
+// import { defineProps } from 'vue';
 import logo1 from '@/assets/SZULogo.png'
 import logo2 from '@/assets/SZUJJHLogo.png'
 
@@ -72,6 +72,7 @@ const props = defineProps({
 }
 
 .nav-text {
+  font-family: 'MySourceHanSerifHeavy'; 
   font-size: 28px;
   font-weight: bold;
   color: #ffffff; /* 参考图中右侧文字为白色 */

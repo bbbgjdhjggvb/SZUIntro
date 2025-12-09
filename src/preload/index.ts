@@ -14,7 +14,6 @@ if (process.contextIsolated) {
     // 通过preload暴露在渲染进程中的IPC处理器接口
     contextBridge.exposeInMainWorld('fileReadApi', {
     readConfigFile: () => ipcRenderer.invoke('read-config-file'),
-    readImage:(imageName:string) => ipcRenderer.invoke('read-image', imageName),
     getImageFilesInDir:(dirpath:string) => ipcRenderer.invoke('get-image-files-in-dir', dirpath),
     readConfigFileAccorName: (file:string)=> ipcRenderer.invoke('read-config-file-accor-name', file),
     })

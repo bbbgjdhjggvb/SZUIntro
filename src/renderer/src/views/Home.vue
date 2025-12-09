@@ -43,7 +43,7 @@ const navItems = ref([
   { title: '校友会分布', subtitle:'全球、全国校友分会分布图', img:DistributionBG, route: '/distribution' },
   { title: '学院校友会', subtitle:'各学院校友会简介', img:CollegesBG, route: '/colleges' },
   { title: '杰出校友', subtitle:'杰出校友履历简介', img:OutstandingBG, route: '/outstanding' },
-  { title: '校友图册', subtitle:'校友图册展示',img:GalleryBG, route: '/gallery' }
+  { title: '校友图册', subtitle:'校友毕业图册展示',img:GalleryBG, route: '/gallery' }
 ]);
 
 const handleNavClick = (path :string) => {
@@ -146,16 +146,17 @@ const handleNavClick = (path :string) => {
 
 .card-title {
   /* 字体设置 */
-  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif; 
+  /* 优先找思源宋体英文名，再找中文名，再找Google版的Noto Serif(其实是一样的)，最后找系统自带宋体 */
+  font-family: 'MySourceHanSerifHeavy';
   font-size: 32px;
-  font-weight: 700;
   color: #9d1e48; /* 深大红 */
   margin: 0 0 12px 0;
   letter-spacing: 2px;
 }
 
 .card-subtitle {
-  font-size: 14px;
+  font-family: 'Source Han Sans CN';
+  font-size: 16px;
   color: #cf7e93; /* 浅红色 */
   margin: 0;
   font-weight: 500;

@@ -115,6 +115,14 @@ onMounted(async () => {
   font-size: 17px;
 }
 
+.introduction-container h1{
+  font-family: 'MySourceHanSerifBold';
+}
+
+.introduction-container text{
+  font-family: 'MySourceHanSerifRegular';
+}
+
 .img-container{
   padding: 10px 15px;
   width: 70%;

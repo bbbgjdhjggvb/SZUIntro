@@ -142,7 +142,7 @@ onMounted(async () => {
   margin: 0;
   font-size: 24px;
   color: #333;
-  font-family: 'Songti SC', serif;
+  font-family: 'MySourceHanSerifBold', serif;
 }
 
 /* 卡片滚动区域：只有这里会滚动 */
@@ -162,6 +162,7 @@ onMounted(async () => {
 /* 文本内容样式 */
 .text-content p {
   font-size: 18px;
+  font-family: 'MySourceHanSerifRegular';
   line-height: 1.8;
   color: #444;
   text-indent: 2em;

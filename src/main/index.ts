@@ -51,12 +51,12 @@ function createWindow(): void {
 
   // 添加页面加载错误处理
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
-    // console.error('Failed to load:', errorCode, errorDescription, validatedURL)
+    console.error('Failed to load:', errorCode, errorDescription, validatedURL)
   })
 
   // 添加控制台消息监听
   mainWindow.webContents.on('console-message', (_event, level, message, _line, _sourceId) => {
-    // console.log(`Renderer console [${level}]: ${message}`)
+    console.log(`Renderer console [${level}]: ${message}`)
   })
 
   // HMR for renderer base on electron-vite cli.
@@ -94,20 +94,6 @@ ipcMain.handle('read-config-file-accor-name', async(_event, file: string) =>{
     return null;
   }
 })
-
-// IPC 处理器：读取图片文件（返回 Base64 编码）
-ipcMain.handle('read-image', async (_event, imageName: string) => {
-  try {
-    const imagePath = join(getDynamicAssetsPath(), imageName);
-    const imageData = readFileSync(imagePath);
-    // 将图片数据转换为 Base64 编码，以便在渲染进程的<img>标签中使用
-    const base64Image = `data:image/${imageName.split('.').pop()};base64,${imageData.toString('base64')}`;
-    return base64Image;
-  } catch (error) {
-    console.error(`Error reading dynamic image ${imageName}:`, error);
-    return null;
-  }
-});
 
 // get-image-files-in-dir返回图片的相对路径和对应的名称
 interface PhotoItem{

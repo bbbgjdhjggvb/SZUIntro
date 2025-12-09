@@ -268,9 +268,7 @@ const initChart = () => {
           color: '#FFFFFF',
           fontSize: 22,
           fontWeight: "bolder",
-          fontFamily: 'Songti SC, serif',
-          textBorderColor: '#FFFFFF',
-          textBorderWidth: 0.4,
+          fontFamily: 'MySourceHanSerifBold, Songti SC, serif',
           distance: 10
         }
       }

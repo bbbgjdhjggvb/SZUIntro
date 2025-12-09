@@ -71,3 +71,32 @@ img {
 ::-webkit-scrollbar-track {
     background: transparent;
 }
+
+/* 定义字体名称 */
+@font-face {
+    /* 你可以自己起名 */
+    font-family: 'MySourceHanSerifBold';
+    /* 路径根据你实际存放位置 */
+    src: url('@/assets/font/SourceHanSerifCN-Bold.otf') format('opentype');
+}
+
+@font-face {
+    /* 你可以自己起名 */
+    font-family: 'MySourceHanSerifLight';
+    /* 路径根据你实际存放位置 */
+    src: url('@/assets/font/SourceHanSerifCN-Light.otf') format('opentype');
+}
+
+@font-face {
+    /* 你可以自己起名 */
+    font-family: 'MySourceHanSerifHeavy';
+    /* 路径根据你实际存放位置 */
+    src: url('@/assets/font/SourceHanSerifCN-Heavy.otf') format('opentype');
+}
+
+@font-face {
+    /* 你可以自己起名 */
+    font-family: 'MySourceHanSerifRegular';
+    /* 路径根据你实际存放位置 */
+    src: url('@/assets/font/SourceHanSerifCN-Regular.otf') format('opentype');
+}
