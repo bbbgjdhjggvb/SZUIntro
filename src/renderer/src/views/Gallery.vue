@@ -114,6 +114,7 @@ import 'swiper/css/effect-fade' // 引入淡入淡出样式
 import { Autoplay, EffectFade } from 'swiper/modules'
 
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const modules = [Autoplay, EffectFade]
 
@@ -169,6 +170,15 @@ const loadYearPhotos = async (year: number) => {
   }
 }
 
+const router = useRouter()
+// 按钮导航
+const enterDetail = (year: number) => {
+  router.push({
+    name: 'GalleryDetail',
+    params: {year: year}
+  });
+};
+
 watch(currentYear, (newYear) => {
   loadYearPhotos(newYear)
 }, { immediate: true })
@@ -188,9 +198,6 @@ const handleYearClick = (index: number) => {
   }
 }
 
-const enterDetail = (year: number) => {
-  console.log('进入详情页', year)
-}
 </script>
 
 <style scoped>

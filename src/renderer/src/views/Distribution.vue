@@ -193,7 +193,6 @@ const getGraphicOption = () => {
 
 // 跳转函数
 const handleNavigation = (name: string) => {
-  console.log('跳转详情：', name);
   router.push({
     name: 'XYHDetail',
     params: {

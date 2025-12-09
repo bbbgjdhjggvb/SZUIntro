@@ -16,7 +16,7 @@ function getDynamicAssetsPath() {
   } else {
     // 开发环境：资源位于项目根目录的resources/external
     const rpath = path.posix.join(app.getAppPath(), 'resources', 'external');
-    console.log('Dynamic assets path (dev):', path);
+    // console.log('Dynamic assets path (dev):', path);
     return rpath
   }
 }
@@ -51,12 +51,12 @@ function createWindow(): void {
 
   // 添加页面加载错误处理
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
-    console.error('Failed to load:', errorCode, errorDescription, validatedURL)
+    // console.error('Failed to load:', errorCode, errorDescription, validatedURL)
   })
 
   // 添加控制台消息监听
   mainWindow.webContents.on('console-message', (_event, level, message, _line, _sourceId) => {
-    console.log(`Renderer console [${level}]: ${message}`)
+    // console.log(`Renderer console [${level}]: ${message}`)
   })
 
   // HMR for renderer base on electron-vite cli.
@@ -66,7 +66,7 @@ function createWindow(): void {
   } else {
     // 在生产环境中，确保路径正确
     const indexPath = join(__dirname, '../renderer/index.html')
-    console.log('Loading renderer from:', indexPath)
+    // console.log('Loading renderer from:', indexPath)
     mainWindow.loadFile(indexPath)
   }
 }
@@ -122,7 +122,7 @@ ipcMain.handle('get-image-files-in-dir', async (_event, dirpath: string) => {
   const cleanDirPath = dirpath.startsWith('/') ? dirpath.slice(1) : dirpath
   const fullPath = path.posix.join(getDynamicAssetsPath(), cleanDirPath);
 
-  console.log('Scanning Dir: ' + fullPath)
+  // console.log('Scanning Dir: ' + fullPath)
 
   try{
     if(!fs.existsSync(fullPath)){
@@ -189,7 +189,7 @@ app.whenReady().then(() => {
 
     const fullPath = path.posix.join(rootDir, decodedPath);
 
-    console.log('Loading image from local-image protocol:', fullPath);
+    // console.log('Loading image from local-image protocol:', fullPath);
 
     return net.fetch(pathToFileURL(fullPath).toString());
   })

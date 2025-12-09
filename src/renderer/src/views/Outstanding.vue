@@ -78,7 +78,6 @@ onMounted(async () => {
       }
     });
     outstandings.value = await Promise.all(imgUrlProcTask)
-    console.log(outstandings.value)
   } catch (error) {
     console.error('Failed to load alumni data:', error)
   }

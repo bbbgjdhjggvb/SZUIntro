@@ -77,6 +77,12 @@ const routes: RouteRecordRaw[] = [
                 path: 'gallery',
                 name: 'Gallery',
                 component: () => import('@/views/Gallery.vue'),
+            },
+            {
+                // 毕业照片展示
+                path: 'gallery/detail/:year',
+                name: 'GalleryDetail',
+                component: () => import('@/views/GalleryDetail.vue')
             }
         ]
     },

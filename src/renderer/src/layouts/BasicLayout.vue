@@ -43,8 +43,14 @@ const currentPageText = computed(() => {
         'CollegeDetail': '校友会介绍',
         'Outstanding': '杰出校友',
         'Gallery': '校友图册',
-        'XYHDetail': '校友分会介绍'
+        'XYHDetail': '校友分会介绍',
+        'GalleryDetail': '校友毕业留影'
     }
+
+    if (route.name === "GalleryDetail" && route.params.year){
+        return `${route.params.year} 届校友毕业留影`
+    }
+
 
     return map[route.name as string] || '首页';
 });
