@@ -113,7 +113,7 @@ import 'swiper/css/effect-fade' // 引入淡入淡出样式
 // 引入模块：使用 Fade 效果替代 Coverflow
 import { Autoplay, EffectFade } from 'swiper/modules'
 
-import { ref, watch , onMounted} from 'vue'
+import { ref, watch} from 'vue'
 import { useRouter } from 'vue-router'
 
 const modules = [Autoplay, EffectFade]
@@ -200,6 +200,12 @@ watch(currentYear, (newYear) => {
 // 底部时间轴 Swiper 逻辑
 const onSwiper = (swiper: any) => {
   swiperInstance.value = swiper
+  const index = years.indexOf(currentYear.value)
+  if (index !== -1){
+    // speed=0 表示瞬间切换，没有滑动动画
+    // runCallbacks=false 表示不触发 slideChange 事件，防止循环触发
+    swiper.slideTo(index, 0, false)
+  }
 }
 
 const onSlideChange = (swiper: any) => {
