@@ -113,7 +113,7 @@ import 'swiper/css/effect-fade' // 引入淡入淡出样式
 // 引入模块：使用 Fade 效果替代 Coverflow
 import { Autoplay, EffectFade } from 'swiper/modules'
 
-import { ref, watch } from 'vue'
+import { ref, watch , onMounted} from 'vue'
 import { useRouter } from 'vue-router'
 
 const modules = [Autoplay, EffectFade]
@@ -124,11 +124,23 @@ interface PhotoItem {
   title: string
 }
 
+const STORAGE_KEY = 'gallery_current_year'
 const startYear = 1988
 const endYear = 2021
 const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i)
 
-const currentYear = ref(startYear)
+const inityear = () => {
+  const stored = sessionStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    const y = parseInt(stored);
+    if (y >= startYear && y <= endYear){
+      return y;
+    }
+  }
+
+  return startYear;
+};
+const currentYear = ref(inityear())
 const swiperInstance = ref<any>(null)
 
 // --- 动态数据状态 ---
@@ -179,7 +191,9 @@ const enterDetail = (year: number) => {
   });
 };
 
+// 添加监听currentYear变化，并进行存储
 watch(currentYear, (newYear) => {
+  sessionStorage.setItem(STORAGE_KEY, newYear.toString());
   loadYearPhotos(newYear)
 }, { immediate: true })
 
