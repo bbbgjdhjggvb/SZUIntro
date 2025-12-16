@@ -1,19 +1,20 @@
 <template>
   <!--卡片导航栏-->
-  <div class="bottom-section">
+  <div class="bottom-section fade-in">
     <div class="cards-container">
       <!--卡片-->
       <div
         v-for="(item, index) in navItems"
         :key="index"
-        class="nav-card"
+        class="nav-card card-entrance"
+        :style="{ '--delay': index * 0.1 + 's' }"
         @click="handleNavClick(item.route)"
       >
         <div 
           class="card-bg-layer" 
           :style="{ backgroundImage: `url(${item.img})` }"
         ></div>
-        <!-- 顶部白色渐变遮罩 (用于衬托文字) -->
+        <!-- 顶部白色渐变遮罩 -->
         <div class="card-mask"></div>
         <!-- 文字内容 -->
         <div class="card-content">
@@ -48,6 +49,7 @@ const navItems = ref([
 
 const handleNavClick = (path :string) => {
   if (path){
+    // 保持你的点击延迟逻辑，这很好
     setTimeout(() => {
       route.push(path);
     }, 150);
@@ -61,99 +63,119 @@ const handleNavClick = (path :string) => {
   height: 100%;
   display: flex;
   padding: 30px;
-  /* align-items: center; */
   justify-content: center;
-  /* 如果有固定的上下边距需求 */
+}
+
+/* 容器淡入动画 */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .cards-container {
   display: flex;
   justify-content: center;
-  gap: 20px; /* 卡片之间的间距 */
+  gap: 20px;
   width: 100%;
-  max-width: 1400px; /* 限制最大宽度，防止在大屏拉太开 */
+  max-width: 1400px;
 }
 
 /* --- 卡片样式 --- */
 .nav-card {
-   /* 尺寸设置：根据设计图比例调整，比如 9:16 */
   width: 240px; 
   height: 480px; 
   position: relative;
-  border-radius: 20px; /* 圆角 */
-  overflow: hidden; /* 裁剪超出圆角的图片 */
+  border-radius: 20px;
+  overflow: hidden;
   cursor: pointer;
   background-color: #fff;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   
-  /* 动画过渡 */
+  /* 基础过渡：用于 hover/active */
   transition: all 0.3s ease-out;
+
+  /* --- 关键：入场动画设置 --- */
+  opacity: 0; /* 初始隐藏 */
+  transform: translateY(60px) scale(0.9); /* 初始位置：靠下且稍微缩小 */
+  /* 使用 both 填充模式确保动画开始前保持隐藏，结束后保持显示 */
+  animation: cardPopUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  /* 读取内联样式的延迟变量 */
+  animation-delay: var(--delay, 0s);
 }
 
-/* 悬浮状态：轻微上浮 + 阴影加深 */
+/* 定义卡片弹出的关键帧 */
+@keyframes cardPopUp {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 悬浮状态 */
 .nav-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 15px 30px rgba(169, 27, 75, 0.3); /* 使用深大红色的阴影 */
+  transform: translateY(-8px) scale(1.02); /* 稍微加强了一点 hover 效果 */
+  box-shadow: 0 20px 40px rgba(169, 27, 75, 0.25);
+  z-index: 10; /* 确保悬浮时在最上层 */
 }
 
-/* 点击状态：轻微缩放 (按压感) */
+/* 点击状态 */
 .nav-card:active {
   transform: scale(0.95);
   transition: transform 0.1s;
 }
 
-/* --- 内部层级样式 --- */
-/* 1. 背景图片层 */
+/* --- 内部层级样式 (保持不变) --- */
 .card-bg-layer {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  /* 核心代码：背景图填充方式 */
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
   z-index: 1;
-  
-  /* 背景图缩放动画 */
   transition: transform 0.6s ease;
 }
 
-/* 2. 白色渐变遮罩层 (模拟图中的上半部分白色背景) */
 .card-mask {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 45%; /* 遮罩覆盖高度，约占卡片一半 */
-  /* 从纯白渐变到透明 */
+  height: 45%;
   background: linear-gradient(to bottom, 
     #ffffff 0%, 
     #ffffff 40%, 
     rgba(255, 255, 255, 0) 100%
   );
   z-index: 2;
-  pointer-events: none; /* 让点击穿透 */
+  pointer-events: none;
 }
 
-/* 3. 文字内容层 */
 .card-content {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  padding-top: 50px; /* 控制文字距离顶部的距离 */
+  padding-top: 50px;
   text-align: center;
   z-index: 3;
 }
 
 .card-title {
-  /* 字体设置 */
-  /* 优先找思源宋体英文名，再找中文名，再找Google版的Noto Serif(其实是一样的)，最后找系统自带宋体 */
   font-family: 'MySourceHanSerifHeavy';
   font-size: 32px;
-  color: #9d1e48; /* 深大红 */
+  color: #9d1e48;
   margin: 0 0 12px 0;
   letter-spacing: 2px;
 }
@@ -161,10 +183,9 @@ const handleNavClick = (path :string) => {
 .card-subtitle {
   font-family: 'Source Han Sans CN';
   font-size: 16px;
-  color: #cf7e93; /* 浅红色 */
+  color: #cf7e93;
   margin: 0;
   font-weight: 500;
   letter-spacing: 1px;
 }
-
 </style>
