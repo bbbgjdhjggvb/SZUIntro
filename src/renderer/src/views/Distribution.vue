@@ -3,8 +3,33 @@
     <div class="box-sidebar">
       <SideBar></SideBar>
     </div>
-    <!--中国地图-->
+    <!--内容区-->
     <div class="max-container">
+      <!-- 切换按钮 -->
+      <div class="toggle-container">
+        <div 
+          class="toggle-btn" 
+          :class="{ active: currentRegion === 'china' }"
+          @click="toggleMap('china')"
+        >
+          国内分会
+        </div>
+        <div 
+          class="toggle-btn" 
+          :class="{ active: currentRegion === 'north_america' }"
+          @click="toggleMap('north_america')"
+        >
+          北美分会
+        </div>
+        <div 
+          class="toggle-btn" 
+          :class="{ active: currentRegion === 'oceania' }"
+          @click="toggleMap('oceania')"
+        >
+          大洋洲分会
+        </div>
+      </div>
+      
       <div ref="chartRef" class="chart-box"></div>
     </div>
   </div>
@@ -18,11 +43,15 @@ import type { EChartsType } from 'echarts';
 import { useRouter } from 'vue-router';
 
 import chinaJson from '@/assets/map/china.json';
+import northAmericaJson from '@/assets/map/NorthAmericaGeo.json';
+import oceaniaJson from '@/assets/map/AoZhou.json';
 
 const router = useRouter();
 
 const chartRef = ref<HTMLElement | null>(null);
 let myChart: EChartsType | null = null;
+type Region = 'china' | 'north_america' | 'oceania';
+const currentRegion = ref<Region>('china');
 
 // 定义需要“扎堆”处理的校友会名称列表
 const clusteredNames = [
@@ -51,6 +80,14 @@ const alumniData = [
   { name: '喀什校友联谊会', from: [75.9938, 39.4677], to: [72.9938, 39.4677], align: 'left' },
 ];
 
+const overseasAlumniData = [
+  { name: '美国加州校友分会', coord: [-119.4179, 36.7783], region: 'north_america' }, // California, USA
+  { name: '加拿大校友联谊会', coord: [-106.3468, 56.1304], region: 'north_america' }, // Canada
+  { name: '多伦多校友联谊会', coord: [-79.3832, 43.6532], region: 'north_america' }, // Toronto, Canada
+  { name: '澳洲校友联谊会', coord: [133.7751, -25.2744], region: 'oceania' }, // Australia
+  { name: '新西兰校友联谊会', coord: [174.8860, -40.9006], region: 'oceania' }, // New Zealand
+];
+
 // 数据过滤：只保留不在扎堆列表中的数据用于常规显示
 const normalData = alumniData.filter(item => !clusteredNames.includes(item.name));
 
@@ -68,7 +105,7 @@ const labelData = normalData.map(item => ({
 
 // 计算自定义图形的配置
 const getGraphicOption = () => {
-  if (!myChart) return [];
+  if (!myChart || currentRegion.value !== 'china') return []; // 只有中国地图模式显示自定义引导线框
 
   // 定义扎堆区域的地理范围 (广东东部及珠三角大致范围)
   // 左上角 [经度, 纬度] 和 右下角 [经度, 纬度]
@@ -201,13 +238,18 @@ const handleNavigation = (name: string) => {
   })
 }
 
-const initChart = () => {
-  if (!chartRef.value) return;
-  echarts.registerMap('china', chinaJson);
-  myChart = echarts.init(chartRef.value);
+const toggleMap = (region: Region) => {
+  if (currentRegion.value === region) return;
+  currentRegion.value = region;
+  updateChartOptions();
+  updateGraphic();
+}
 
-  const colors = {
-    type: 'linear', x:0, y:0, x2:0, y2:1,
+const updateChartOptions = () => {
+  if (!myChart) return;
+
+  const defaultColors = {
+    type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
     colorStops: [
       { offset: 0, color: '#FFFFFF' },
       { offset: 0.3, color: '#F2A8C1' },
@@ -215,67 +257,178 @@ const initChart = () => {
     ],
     global: false
   };
-  
-  const option = {
-    backgroundColor: 'transparent',
-    geo: {
-      map: 'china',
-      roam: false,
-      zoom: 1.3,
-      layoutCenter: ['47%', '65%'],
-      layoutSize: '100%',
-      itemStyle: {
-        areaColor: colors,
-        shadowColor: '#8B1A38',
-        shadowOffsetX: -1,
-        shadowOffsetY: 20,
-        shadowBlur: 0,
-        borderColor: '#ffffff',
-        borderWidth: 2,
-      },
-      emphasis: {
-        itemStyle: { areaColor: colors },
-        label: { show: false }
-      }
-    },
-    // 初始化时 graphic 为空，需要在 setOption 后或 resize 中计算
-    graphic: [], 
-    series: [
-      {
-        type: 'lines',
-        coordinateSystem: 'geo',
-        zlevel: 1,
-        z: 2,
-        lineStyle: {
-          color: '#FFFFFF',
-          width: 2,
-          opacity: 0.7,
-          curveness: 0
-        },
-        data: linesData // 使用过滤后的数据
-      },
-      {
-        type: 'scatter',
-        coordinateSystem: 'geo',
-        zlevel: 1,
-        z: 3,
-        data: labelData, // 使用过滤后的数据
-        symbolSize: 0,
-        slient: false, // 允许散点响应鼠标点击
-        label: {
-          show: true,
-          formatter: '{b}',
-          color: '#FFFFFF',
-          fontSize: 22,
-          fontWeight: "bolder",
-          fontFamily: 'MySourceHanSerifBold, Songti SC, serif',
-          distance: 10
-        }
-      }
-    ]
+
+  // 北美专用配色：减少白色渐变，避免阿拉斯加因独立bbox导致过白
+  const naColors = {
+    type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+    colorStops: [
+      { offset: 0, color: '#FFF0F5' }, // 极淡的粉色 (LavenderBlush)，接近白色但带粉色调
+      { offset: 0.3, color: '#F2A8C1' }, // 恢复中间色
+      { offset: 1, color: '#FF0055' }
+    ],
+    global: false
   };
+
+  const colors = currentRegion.value === 'north_america' ? naColors : defaultColors;
+
+  if (currentRegion.value !== 'china') {
+    // 海外模式配置
+    const mapName = currentRegion.value;
+    const currentData = overseasAlumniData.filter(d => d.region === mapName);
+
+    // 针对每个区域的特定显示配置
+    let center: number[] | undefined = undefined;
+    let zoom = 1.2;
+    let layoutCenter: string[] | undefined = undefined;
+    let layoutSize: string | undefined = undefined;
+    
+    if (mapName === 'north_america') {
+       // 北美
+       zoom = 1.8; 
+       layoutCenter = ['45%', '45%'];
+       layoutSize = '75%';
+    } else if (mapName === 'oceania') {
+       // 大洋洲
+       zoom = 1.0;
+       layoutCenter = ['50%', '45%']; // 稍微上移
+       layoutSize = '100%';
+    }
+
+    const option = {
+      geo: {
+        map: mapName, // 使用过滤后的地图
+        roam: false, // 禁止缩放漫游
+        zoom: zoom,
+        center: center,
+        layoutCenter: layoutCenter,
+        layoutSize: layoutSize,
+        silent: true, // 禁止地图板块的鼠标交互（去除hover高亮/阴影）
+        label: { show: false },
+        itemStyle: {
+          areaColor: colors, // 复用配色
+          shadowColor: '#8B1A38',
+          shadowOffsetX: -1,
+          shadowOffsetY: 20,
+          shadowBlur: 0,
+          borderColor: '#ffffff',
+          borderWidth: 1,
+        },
+        emphasis: {
+          itemStyle: { areaColor: colors },
+          label: { show: false }
+        }
+      },
+      graphic: [], // 清空国内的graphic
+      series: [
+        {
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          zlevel: 1,
+          z: 3,
+          data: currentData.map(item => ({
+            name: item.name,
+            value: item.coord
+          })),
+          symbolSize: 8,
+          itemStyle: {
+            color: '#FFFFFF',
+            shadowBlur: 10,
+            shadowColor: '#333'
+          },
+          label: {
+            show: true,
+            formatter: '{b}',
+            position: 'right',
+            color: '#FFFFFF',
+            fontSize: 14,
+            fontWeight: "bold",
+            fontFamily: 'MySourceHanSerifBold, Songti SC, serif',
+            distance: 10,
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            padding: [4, 8],
+            borderRadius: 4
+          }
+        }
+      ]
+    };
+    myChart.setOption(option, true); // true = not merge, replace components
+  } else {
+    // 国内模式配置 (原配置)
+    const option = {
+      geo: {
+        map: 'china',
+        roam: false,
+        zoom: 1.3,
+        center: null, // Reset center using layoutCenter/Size
+        layoutCenter: ['47%', '65%'],
+        layoutSize: '100%',
+        silent: true, // 禁止地图板块的鼠标交互
+        itemStyle: {
+          areaColor: colors,
+          shadowColor: '#8B1A38',
+          shadowOffsetX: -1,
+          shadowOffsetY: 20,
+          shadowBlur: 0,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        },
+        emphasis: {
+          itemStyle: { areaColor: colors },
+          label: { show: false }
+        }
+      },
+      graphic: [], // 初始为空，由updateGraphic填充
+      series: [
+        {
+          type: 'lines',
+          coordinateSystem: 'geo',
+          zlevel: 1,
+          z: 2,
+          lineStyle: {
+            color: '#FFFFFF',
+            width: 2,
+            opacity: 0.7,
+            curveness: 0
+          },
+          data: linesData
+        },
+        {
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          zlevel: 1,
+          z: 3,
+          data: labelData,
+          symbolSize: 0,
+          silent: false,
+          label: {
+            show: true,
+            formatter: '{b}',
+            color: '#FFFFFF',
+            fontSize: 22,
+            fontWeight: "bolder",
+            fontFamily: 'MySourceHanSerifBold, Songti SC, serif',
+            distance: 10
+          }
+        }
+      ]
+    };
+    myChart.setOption(option, true);
+  }
+}
+
+const initChart = () => {
+  if (!chartRef.value) return;
+  echarts.registerMap('china', chinaJson as any);
   
-  myChart.setOption(option);
+  // 注册北美地图
+  echarts.registerMap('north_america', northAmericaJson as any);
+
+  // 注册大洋洲地图
+  echarts.registerMap('oceania', oceaniaJson as any);
+  
+  myChart = echarts.init(chartRef.value);
+  
+  updateChartOptions();
 
   // 地图上散点响应鼠标点击事件
   myChart.on('click', (parama) => {
@@ -284,7 +437,6 @@ const initChart = () => {
     }
   })
 
-  // 必须在 setOption 之后，地图渲染有了坐标系，才能计算像素坐标
   updateGraphic();
 }
 
@@ -300,7 +452,6 @@ const updateGraphic = () => {
 const resizeChart = () => {
   if (myChart) {
     myChart.resize();
-    // 窗口大小改变后，像素坐标变了，需要重新计算绘制
     updateGraphic();
   }
 }
@@ -330,6 +481,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  position: relative; /* ensure absolute children position correctly */
 }
 
 .box-sidebar{
@@ -357,11 +509,46 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .chart-box{
   width: 100%;
   height: 100%;
   background: transparent;
+}
+
+.toggle-container {
+  display: flex;
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  padding: 4px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.toggle-btn {
+  padding: 8px 24px;
+  border-radius: 24px;
+  font-family: 'Songti SC', serif;
+  font-size: 18px;
+  font-weight: bold;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-btn.active {
+  background: #FFFFFF;
+  color: #8B1A38; /* Use a brand color for active text */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 </style>
