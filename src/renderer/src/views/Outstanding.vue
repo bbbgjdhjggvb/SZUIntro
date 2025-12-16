@@ -41,7 +41,7 @@
       </button>
 
       <!-- 底部 Pagination Dots -->
-      <div class="pagination-dots">
+      <!-- <div class="pagination-dots">
         <span 
           v-for="p in totalPages" 
           :key="p" 
@@ -49,7 +49,7 @@
           :class="{ active: p === currentPage }"
           @click="goToPage(p)"
         ></span>
-      </div>
+      </div> -->
     </div>
 
     <!-- 详情弹窗 Modal -->
@@ -218,6 +218,8 @@ onMounted(async () => {
   position: relative;
   padding-left: 40px;
   padding-right: 40px;
+  margin-right: 80px;
+  margin-left: 10px;
 }
 
 /* Grid Container */
@@ -227,7 +229,7 @@ onMounted(async () => {
   grid-template-rows: repeat(3, auto);
   gap: 20px 24px; /* 横向间距加大一点 */
   width: 100%;
-  max-width: 1200px; /* 稍微限制最大宽度，防止太散 */
+  max-width: 1100px; /* 稍微限制最大宽度，防止太散 */
   padding: 10px;
 }
 
@@ -239,7 +241,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 15px;
+  padding: 9px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer; /* 变为手型 */
   
@@ -310,8 +312,8 @@ onMounted(async () => {
   background: #9E1F35;
   color: white;
   border: none;
-  width: 48px; 
-  height: 48px;
+  width: 54px; 
+  height: 54px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -320,12 +322,6 @@ onMounted(async () => {
   box-shadow: 0 4px 16px rgba(158, 31, 53, 0.3);
   transition: all 0.3s ease;
   z-index: 20;
-}
-
-.nav-btn:hover:not(:disabled) {
-  background: #bd2640;
-  transform: translateY(-50%) scale(1.1);
-  box-shadow: 0 6px 20px rgba(158, 31, 53, 0.4);
 }
 
 .nav-btn:disabled {
@@ -339,14 +335,14 @@ onMounted(async () => {
 .next-btn { right: 10px; }
 
 .icon {
-  width: 28px;
-  height: 28px;
+  width: 54px;
+  height: 54px;
 }
 
 /* Pagination Dots */
 .pagination-dots {
   position: absolute;
-  bottom: 30px; 
+  bottom: 10px; 
   left: 50%;
   transform: translateX(-50%);
   display: flex;
