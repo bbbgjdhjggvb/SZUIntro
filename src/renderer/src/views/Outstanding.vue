@@ -11,22 +11,28 @@
       </button>
 
       <!-- Grid 内容区 -->
-      <div class="grid-container">
+      <!-- 添加 :key="currentPage" 确保翻页时重新触发动画 -->
+      <div class="grid-container" :key="currentPage">
         <div
           v-for="(outstanding, index) in displayedOutstandings"
           :key="outstanding.id || index"
           class="alunmi-card"
-          :style="{ '--delay': (index % 15) * 0.05 + 's' }"
+          :style="{ '--delay': (index * 0.08) + 's' }" 
           @click="openModal(outstanding)" 
         >
            <div class="card-img-box">
-            <img :src="outstanding.image" class="avater" loading="lazy" />
+            <!--添加 @load 事件处理图片淡入 -->
+            <img 
+              :src="outstanding.image" 
+              class="avater" 
+              loading="lazy"
+              @load="onImgLoad"
+            />
            </div>
 
            <div class="card-content">
             <h3 class="name">{{ outstanding.name }}</h3>
             <p class="meta">
-              <!-- 新增 '级' 后缀 -->
               <span>{{ outstanding.year }}级</span>
               <span v-if="outstanding.year && outstanding.major">|</span>
               <span>{{ outstanding.major }}</span>
@@ -39,17 +45,6 @@
       <button class="nav-btn next-btn" @click="nextPage" :disabled="currentPage === totalPages">
         <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
       </button>
-
-      <!-- 底部 Pagination Dots -->
-      <!-- <div class="pagination-dots">
-        <span 
-          v-for="p in totalPages" 
-          :key="p" 
-          class="dot" 
-          :class="{ active: p === currentPage }"
-          @click="goToPage(p)"
-        ></span>
-      </div> -->
     </div>
 
     <!-- 详情弹窗 Modal -->
@@ -59,12 +54,10 @@
           <button class="close-btn" @click="closeModal">×</button>
           
           <div class="modal-body">
-            <!-- 左侧完整图片 -->
             <div class="modal-img-container">
               <img :src="currentAlumni.image" class="modal-img" />
             </div>
             
-            <!-- 右侧文字介绍 -->
             <div class="modal-text-container">
               <h2 class="modal-name">{{ currentAlumni.name }}</h2>
               <p class="modal-meta">
@@ -91,7 +84,6 @@ interface Outstanding {
   name: string
   year: string
   major: string
-  lables: string[]
   image: string
   description?: string 
 }
@@ -121,11 +113,6 @@ const prevPage = () => {
   if (currentPage.value > 1) currentPage.value--
 }
 
-const goToPage = (p: number) => {
-  currentPage.value = p
-}
-
-// Modal functions
 const openModal = (alumni: Outstanding) => {
   currentAlumni.value = alumni
   showModal.value = true
@@ -133,12 +120,19 @@ const openModal = (alumni: Outstanding) => {
 
 const closeModal = () => {
   showModal.value = false
-  // briefly wait to clear currentAlumni for animation if needed, or just keep it
+}
+
+//图片加载回调，赋予 loaded 类名
+const onImgLoad = (e: Event) => {
+  const target = e.target as HTMLImageElement
+  if (target) {
+    target.classList.add('loaded')
+  }
 }
 
 onMounted(async () => {
   try {
-    const data = await window.fileReadApi?.readConfigFile() as any
+    const data = await window.fileReadApi?.readConfigFileAccorName("outstanding_alumni.json") as any
     let existingData = data.outstanding_alumni || []
 
     const imgUrlProcTask = existingData.map(async (e: any) => {
@@ -146,7 +140,6 @@ onMounted(async () => {
       return {
         ...e,
         image: realImgUrl || '',
-        // 如果原有数据没有description，赋一个初始值（如果有的话使用原有的）
         description: e.description || '杰出校友，在各自领域均有建树，为社会做出了重要贡献。深圳大学校友会致力于联络校友，弘扬母校传统，促进校友事业发展。'
       }
     });
@@ -156,23 +149,19 @@ onMounted(async () => {
     if (processedData.length < totalTarget) {
         const mockCount = totalTarget - processedData.length
         const placeholderImg = processedData.length > 0 ? processedData[0].image : '' 
-        
-        // 长文本 Mock
-        const mockDesc = "这里是校友的详细介绍文本。深圳大学（Shenzhen University），简称“深大”，位于广东省深圳市，是经中华人民共和国教育部批准设立，由广东省主管、深圳市人民政府主办的综合性大学。学校致力于培养高素质创新创业人才，引领社会进步和发展。这位校友在毕业后投身于行业建设，取得了卓越的成就..."
+        const mockDesc = "这里是校友的详细介绍文本..."
 
         for (let i = 0; i < mockCount; i++) {
             processedData.push({
                 id: 9999 + i,
-                name: `姓名姓名`,
+                name: `姓名${i}`,
                 year: '1990',
                 major: '会计专业',
-                lables: [],
                 image: placeholderImg,
                 description: mockDesc
             })
         }
     }
-
     outstandings.value = processedData
   } catch (error) {
     console.error('Failed to load alumni data:', error)
@@ -211,9 +200,8 @@ onMounted(async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* 整体上移：使用 padding-bottom 代替 evenly，或者加 padding-top 调整 */
   justify-content: flex-start; 
-  padding-top: 20px; /* 顶部预留空间，让整体靠上 */
+  padding-top: 20px; 
   align-items: center;
   position: relative;
   padding-left: 40px;
@@ -227,10 +215,12 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(3, auto);
-  gap: 20px 24px; /* 横向间距加大一点 */
+  gap: 20px 24px;
   width: 100%;
-  max-width: 1100px; /* 稍微限制最大宽度，防止太散 */
+  max-width: 1200px;
   padding: 10px;
+  /* 确保整个容器在重绘时稳定 */
+  min-height: 600px; 
 }
 
 /* Card Styles */
@@ -243,20 +233,33 @@ onMounted(async () => {
   align-items: center;
   padding: 9px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer; /* 变为手型 */
+  cursor: pointer;
   
+  /* 修改点4：优化卡片入场动画 */
   opacity: 0;
-  animation: popIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
+  transform: translateY(20px); /* 初始位置向下偏移 */
+  animation: cardEnter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  /* 关键：使用 JS 传入的变量控制延迟 */
+  animation-delay: var(--delay); 
 }
 
 .alunmi-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 25px rgba(158, 31, 53, 0.15);
+  /* 鼠标悬浮时覆盖 animation 的 transform 状态 */
+  transition: transform 0.3s ease;
 }
 
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+/* 新定义的卡片入场动画：从下往上浮出，透明度从0到1 */
+@keyframes cardEnter {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
 }
 
 .card-img-box {
@@ -268,15 +271,24 @@ onMounted(async () => {
   border: 3px solid #f8f8f8;
   position: relative;
   flex-shrink: 0;
+  background: #f0f0f0; /* 图片未加载时的背景色 */
 }
 
+/* 图片默认透明，加载后通过 .loaded 类淡入 */
 .avater {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* 确保头部不被切掉 */
   object-position: top center; 
   display: block;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.avater.loaded {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .card-content {
@@ -305,8 +317,6 @@ onMounted(async () => {
 /* Navigation Buttons */
 .nav-btn {
   position: absolute;
-  top: 50%; /* 这里的 50% 是相对于 box-content 的 */
-  /* 由于 box-content 现在是 flex-start，可能需要微调 top 值或者让它固定在屏幕中间 */
   top: 45%; 
   transform: translateY(-50%);
   background: #9E1F35;
@@ -334,40 +344,9 @@ onMounted(async () => {
 .prev-btn { left: 10px; }
 .next-btn { right: 10px; }
 
-.icon {
-  width: 54px;
-  height: 54px;
-}
+.icon { width: 54px; height: 54px; }
 
-/* Pagination Dots */
-.pagination-dots {
-  position: absolute;
-  bottom: 10px; 
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(158, 31, 53, 0.2);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.dot:hover {
-  background: rgba(158, 31, 53, 0.5);
-}
-
-.dot.active {
-  background: #9E1F35;
-  transform: scale(1.4);
-}
-
-/* --- Modal Styles --- */
+/* Modal Styles - 保持不变 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -409,11 +388,7 @@ onMounted(async () => {
 }
 .close-btn:hover { color: #333; }
 
-.modal-body {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
+.modal-body { display: flex; width: 100%; height: 100%; }
 
 .modal-img-container {
   flex: 0 0 45%; 
@@ -427,10 +402,6 @@ onMounted(async () => {
 .modal-img {
   width: 100%;
   height: 100%;
-  /* 左侧展示完整图片：object-fit cover 全屏铺满该区域 或者 contain 看需求。
-     用户说“完整的图片”，通常 cover 比较好看且无留白，前提是照片比例合适。
-     如果照片比例差异大，cover 可能会切。可以尝试 contain 并加背景色。
-     这里先用 cover 保证美观。*/
   object-fit: cover; 
 }
 
@@ -470,14 +441,8 @@ onMounted(async () => {
   width: 100%;
 }
 
-/* 自定义滚动条 */
-.modal-desc-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-.modal-desc-scroll::-webkit-scrollbar-thumb {
-  background: #e0e0e0;
-  border-radius: 3px;
-}
+.modal-desc-scroll::-webkit-scrollbar { width: 6px; }
+.modal-desc-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 3px; }
 
 .modal-desc {
   font-size: 15px;
@@ -491,10 +456,6 @@ onMounted(async () => {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.modal-fade-enter-active, .modal-fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.modal-fade-enter-from, .modal-fade-leave-to {
-  opacity: 0;
-}
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>
