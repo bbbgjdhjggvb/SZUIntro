@@ -1,8 +1,8 @@
 import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
-import { join } from 'path'
+import { extname, join, posix } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { readFileSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
@@ -147,6 +147,45 @@ ipcMain.handle('get-image-files-in-dir', async (_event, dirpath: string) => {
 
   } catch (error) {
     console.error(`Error reading directory ${fullPath}:`, error);
+    return [];
+  }
+});
+
+// 读取一个文件夹下面的所有图片，返回string[]，表示所有图片对应的路径
+ipcMain.handle('get-flat-dir-images', async (_event, dirPath: string) => {
+  // 移除开头的斜杠
+  const cleanDirPath = dirPath.startsWith('/') ? dirPath.slice(1) : dirPath;
+  const fullPath = join(getDynamicAssetsPath(), cleanDirPath);
+
+  try {
+    if (!existsSync(fullPath)) {
+      console.warn(`Directory not found: ${fullPath}`);
+      return [];
+    }
+
+    const files = readdirSync(fullPath);
+    const images: string[] = [];
+
+    files.forEach(file => {
+      // 排除隐藏文件
+      if (file.startsWith('.')) return;
+      
+      const filePath = join(fullPath, file);
+      if (statSync(filePath).isFile()) {
+        const ext = extname(file).toLowerCase();
+        if (['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)) {
+          // 返回相对路径，供前端拼接 local-image://
+          // 使用 posix.join 确保 Windows 下也是正斜杠
+          images.push(posix.join(cleanDirPath, file));
+        }
+      }
+    });
+
+    // 稍微排个序，保证顺序一致
+    return images.sort();
+
+  } catch (error) {
+    console.error(`Error reading flat directory ${fullPath}:`, error);
     return [];
   }
 });
