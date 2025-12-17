@@ -13,9 +13,10 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('api', api)
     // 通过preload暴露在渲染进程中的IPC处理器接口
     contextBridge.exposeInMainWorld('fileReadApi', {
-    readConfigFile: () => ipcRenderer.invoke('read-config-file'),
-    getImageFilesInDir:(dirpath:string) => ipcRenderer.invoke('get-image-files-in-dir', dirpath),
-    readConfigFileAccorName: (file:string)=> ipcRenderer.invoke('read-config-file-accor-name', file),
+      readConfigFile: () => ipcRenderer.invoke('read-config-file'),
+      getImageFilesInDir:(dirpath:string) => ipcRenderer.invoke('get-image-files-in-dir', dirpath),
+      readConfigFileAccorName: (file:string)=> ipcRenderer.invoke('read-config-file-accor-name', file),
+      getFlatDirImages: (dirpath:string)=> ipcRenderer.invoke('get-flat-dir-images', dirpath),
     })
   } catch (error) {
     console.error(error)

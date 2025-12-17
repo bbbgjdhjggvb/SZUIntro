@@ -14,6 +14,7 @@ declare global {
       readConfigFile:() => Promise<any | null>,
       readConfigFileAccorName: (file:string) => Promise<any | null>,
       getImageFilesInDir:(dirpath:string) => Promise<PhotoItem[]>
+      getFlatDirImages:(dirpath:string) => Promise<string[]>
     }
   }
 }
