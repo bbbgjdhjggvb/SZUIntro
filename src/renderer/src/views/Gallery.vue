@@ -67,7 +67,8 @@
           <div class="year-info">
             <h2 class="year-title">
               <span class="decoration-line"></span>
-              {{ currentYear }}
+              <span class="year-number">{{ currentYear }}</span>
+              <span class="year-text">届</span>
               <span class="decoration-line"></span>
             </h2>
             <p class="year-subtitle">SHENZHEN UNIVERSITY</p>
@@ -365,10 +366,37 @@ const handleYearClick = (index: number) => {
 
 /* 年份标题样式 */
 .year-info { text-align: center; margin-top: 20px; z-index: 2; }
-.year-title { font-family: "Times New Roman", serif; font-size: 48px; color: #9E1F35; display: flex; align-items: center; justify-content: center; gap: 15px; margin: 0; }
+.year-title { 
+  font-family: "Times New Roman", serif;
+  font-size: 48px;
+  color: #9E1F35;
+  display: flex;
+  align-items: center; 
+  justify-content: center; 
+  gap: 15px; 
+  margin: 0; 
+}
+
 .decoration-line { width: 40px; height: 2px; background: linear-gradient(90deg, transparent, #9E1F35); }
 .decoration-line:last-child { background: linear-gradient(90deg, #9E1F35, transparent); }
 .year-subtitle { font-size: 10px; letter-spacing: 4px; color: #7A1225; opacity: 0.6; margin-top: 5px; }
+
+.year-number{
+  font-family: "Times New Roman", serif;
+  font-size: 60px;
+  font-weight: bold;
+  line-height: 1;
+  transform: translateY(4px);
+}
+
+.year-text{
+  font-family: "MySourceHanSerifBold";
+  font-size: 56px;
+  margin-left: -5px;
+  margin-top: 8px;
+  opacity: 0.9;
+  /* transform: translateY(-1px); */
+}
 
 /* 缺省状态 */
 .no-photo { text-align: center; color: #9E1F35; opacity: 0.6; padding: 100px 0;}
