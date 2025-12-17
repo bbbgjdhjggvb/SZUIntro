@@ -113,9 +113,28 @@ onMounted(async () => {
 
 <!-- 1. 原有的 scoped 样式保持不变 -->
 <style scoped>
-.detail-wrapper { width: 100%; height: 100%; display: flex; background: #fdfdfd; overflow: hidden; }
+.detail-wrapper { 
+  width: 100%; 
+  height: 100%; 
+  display: flex; 
+  overflow: hidden; 
+  color: transparent;
+}
 .box-sidebar { width: 80px; flex-shrink: 0; z-index: 10; opacity: 0; animation: slideInLeft 0.6s forwards 0.2s; }
-.detail-container { flex: 1; height: 100%; display: flex; flex-direction: column; padding: 0 40px; overflow: hidden; opacity: 0; animation: fadeIn 0.5s forwards 0.2s; }
+.detail-container { 
+  flex: 1; 
+  height: 100%; 
+  display: flex; 
+  flex-direction: column; 
+  padding: 0 40px;
+  overflow: hidden; 
+  opacity: 0; 
+  animation: fadeIn 0.5s forwards 0.2s; 
+  background: #fdfdfd;
+  border-radius: 12px;
+  margin-left: 20px;
+  margin-right: 40px;
+}
 
 /* Header */
 .header-section { flex-shrink: 0; padding: 30px 0 20px 0; text-align: center; }

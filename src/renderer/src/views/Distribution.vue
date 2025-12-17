@@ -5,32 +5,32 @@
     </div>
     <!--内容区-->
     <div class="max-container">
-      <!-- 切换按钮 -->
+      <div ref="chartRef" class="chart-box"></div>
+      
+      <!-- 底部按钮 -->
       <div class="toggle-container">
         <div 
           class="toggle-btn" 
           :class="{ active: currentRegion === 'china' }"
           @click="toggleMap('china')"
         >
-          国内分会
+          国内校友分会
         </div>
         <div 
           class="toggle-btn" 
           :class="{ active: currentRegion === 'north_america' }"
           @click="toggleMap('north_america')"
         >
-          北美分会
+          北美校友分会
         </div>
         <div 
           class="toggle-btn" 
           :class="{ active: currentRegion === 'oceania' }"
           @click="toggleMap('oceania')"
         >
-          大洋洲分会
+          大洋洲校友分会
         </div>
       </div>
-      
-      <div ref="chartRef" class="chart-box"></div>
     </div>
   </div>
 </template>
@@ -42,18 +42,20 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import type { EChartsType } from 'echarts';
 import { useRouter } from 'vue-router';
 
+// 确保路径正确
 import chinaJson from '@/assets/map/china.json';
 import northAmericaJson from '@/assets/map/NorthAmericaGeo.json';
 import oceaniaJson from '@/assets/map/AoZhou.json';
 
 const router = useRouter();
-
 const chartRef = ref<HTMLElement | null>(null);
 let myChart: EChartsType | null = null;
 type Region = 'china' | 'north_america' | 'oceania';
 const currentRegion = ref<Region>('china');
 
-// 定义需要“扎堆”处理的校友会名称列表
+// ================= 1. 数据定义 =================
+
+// 国内扎堆显示的城市
 const clusteredNames = [
   '普宁校友分会', '大潮阳校友分会', '饶平校友分会', 
   '紫金校友分会', '惠来校友分会', '东莞校友分会',
@@ -61,7 +63,8 @@ const clusteredNames = [
   '香港校友联谊会'
 ];
 
-const alumniData = [
+// 国内数据
+const chinaAlumniData = [
   { name: '北京地区校友分会', from: [116.407526, 39.90403], to: [135.00, 39.90403], align: 'right' },
   { name: '长三角校友分会', from: [120.473701, 30.230416], to: [135.00, 30.230416], align: 'right' },
   { name: '广州校友分会', from: [113.2644, 23.1291], to: [135.00, 23.1291], align: 'right' },
@@ -80,45 +83,88 @@ const alumniData = [
   { name: '喀什校友联谊会', from: [75.9938, 39.4677], to: [72.9938, 39.4677], align: 'left' },
 ];
 
-const overseasAlumniData = [
-  { name: '美国加州校友分会', coord: [-119.4179, 36.7783], region: 'north_america' }, // California, USA
-  { name: '加拿大校友联谊会', coord: [-106.3468, 56.1304], region: 'north_america' }, // Canada
-  { name: '多伦多校友联谊会', coord: [-79.3832, 43.6532], region: 'north_america' }, // Toronto, Canada
-  { name: '澳洲校友联谊会', coord: [133.7751, -25.2744], region: 'oceania' }, // Australia
-  { name: '新西兰校友联谊会', coord: [174.8860, -40.9006], region: 'oceania' }, // New Zealand
-];
-
-// 数据过滤：只保留不在扎堆列表中的数据用于常规显示
-const normalData = alumniData.filter(item => !clusteredNames.includes(item.name));
-
-const linesData = normalData.map(item => ({
-  coords: [item.from, item.to]
-}));
-
-const labelData = normalData.map(item => ({
+// 国内数据预处理
+const normalData = chinaAlumniData.filter(item => !clusteredNames.includes(item.name));
+const chinaLinesData = normalData.map(item => ({ coords: [item.from, item.to] }));
+const chinaLabelData = normalData.map(item => ({
   name: item.name,
   value: item.to,
-  label: {
-    position: item.align === 'left' ? 'left' : 'right'
-  }
+  label: { position: item.align === 'left' ? 'left' : 'right' }
 }));
 
-// 计算自定义图形的配置
-const getGraphicOption = () => {
-  if (!myChart || currentRegion.value !== 'china') return []; // 只有中国地图模式显示自定义引导线框
+// 海外数据配置 (已添加 align 参数)
+// offset: [X轴偏移量, 0]。Y轴固定为0以保持水平。
+const overseasAlumniData = [
+  // 北美
+  { 
+    name: '美国加州校友分会', 
+    coord: [-119.4179, 36.7783], 
+    region: 'north_america', 
+    offset: [-180, 0], 
+    align: 'left' 
+  }, 
+  { 
+    name: '加拿大校友联谊会', 
+    coord: [-106.3468, 56.1304], 
+    region: 'north_america', 
+    offset: [180, 0], 
+    align: 'right' 
+  }, 
+  { 
+    name: '多伦多校友联谊会', 
+    coord: [-79.3832, 43.6532], 
+    region: 'north_america', 
+    offset: [200, 0], 
+    align: 'right' 
+  }, 
+  // 大洋洲
+  { 
+    name: '澳洲校友联谊会', 
+    coord: [133.7751, -25.2744], 
+    region: 'oceania', 
+    offset: [220, 0], 
+    align: 'right' 
+  }, 
+  { 
+    name: '新西兰校友联谊会', 
+    coord: [174.8860, -40.9006], 
+    region: 'oceania', 
+    offset: [150, 0], 
+    align: 'right' 
+  }, 
+];
 
-  // 定义扎堆区域的地理范围 (广东东部及珠三角大致范围)
-  // 左上角 [经度, 纬度] 和 右下角 [经度, 纬度]
-  const clusterGeoRect = {
-    topLeft: [112.5, 24.5], 
-    bottomRight: [117.5, 21.5] 
-  };
+// ================= 2. 交互逻辑 =================
 
-  // 将地理坐标转换为屏幕像素坐标
+const handleNavigation = (name: string) => {
+  router.push({
+    name: 'XYHDetail',
+    params: { name: name }
+  })
+}
+
+const toggleMap = (region: Region) => {
+  if (currentRegion.value === region) return;
+  currentRegion.value = region;
+  
+  // 1. 切换地图底图配置
+  updateChartOptions();
+  
+  // 2. 延迟绘制引导线动画 (400ms 确保地图渲染完成)
+  setTimeout(() => {
+    updateGraphic(true); // true = 播放生长动画
+  }, 400);
+}
+
+// ================= 3. Graphic 绘制逻辑 =================
+
+// 国内扎堆区域 Graphic (保持不变)
+const getChinaGraphicOption = () => {
+  if (!myChart) return [];
+  const clusterGeoRect = { topLeft: [112.5, 24.5], bottomRight: [117.5, 21.5] };
   const p1 = myChart.convertToPixel('geo', clusterGeoRect.topLeft);
   const p2 = myChart.convertToPixel('geo', clusterGeoRect.bottomRight);
 
-  // 如果转换失败（地图未渲染完成），返回空
   if (!p1 || !p2) return [];
 
   const rectX = p1[0];
@@ -126,333 +172,239 @@ const getGraphicOption = () => {
   const rectW = p2[0] - p1[0];
   const rectH = p2[1] - p1[1];
 
-  // 列表框双列布局
-  const singleColWidth = 120; // 单列文字预留宽度
-  const padding = 10; // 边框内边距
-  const gap = 10;
+  const singleColWidth = 140;
+  const padding = 10;
+  const gap = 5;
   const lineHeight = 30;
   const totalCount = clusteredNames.length;
-  const rows = Math.ceil(totalCount / 2); // 左边5个，右边5个
-
-  // 列表框的长度和宽度
+  const rows = Math.ceil(totalCount / 2);
   const listBoxWidth = singleColWidth * 2 + padding * 2 + gap;
   const listBoxHeight = rows * lineHeight + padding * 2;
-  const guideLineLength = 160; // 引导线长度
-
-  // 列表框位置：在地图框的左侧
-  // 计算逻辑：地图框左边X - 引导线长 - 列表框宽
+  const guideLineLength = 240; 
   const listBoxX = rectX - guideLineLength - listBoxWidth;
-  // 列表框Y轴：垂直居中于地图框
-  const listBoxY = rectY + (rectH / 2) - (listBoxHeight / 2) + 50;
+  const listBoxY = rectY + (rectH / 2) - (listBoxHeight / 2);
 
-  // 生成双列文字元素列表
   const textElements = clusteredNames.map((name, index) => {
-    const isSecondCol = index >= rows; // 超过行数上限就进入第二列
+    const isSecondCol = index >= rows;
     const rowIndex = index % rows;
-    const currentTextX = isSecondCol
-    ? listBoxX + padding + singleColWidth + gap
-    : listBoxX + padding;
+    const currentTextX = isSecondCol ? listBoxX + padding + singleColWidth + gap : listBoxX + padding;
     const currentTextY = listBoxY + padding + rowIndex * lineHeight + 10;
 
     return {
       type: 'text',
-      z: 999, // 层级置顶
+      z: 100,
       left: currentTextX,
       top: currentTextY,
       style: {
         text: name,
         fill: '#FFFFFF',
-        font: 'bold 16px "Songti SC", serif',
-        width: singleColWidth, // 限制宽度
-        overflow: 'truncate',  // 如果名字太长就截断
-        textVerticalAlign: 'middle', // 垂直居中，水平居左
+        font: '16px "MySourceHanSerifHeavy"',
+        width: singleColWidth,
+        overflow: 'truncate',
+        textVerticalAlign: 'middle',
         textShadowColor: 'rgba(0,0,0,0.5)',
-        textShadowBlur: 2,
-        textShadowOffsetX: 1,
-        textShadowOffsetY: 1
+        textShadowBlur: 2
       },
-      onclick: ()=>{
-        handleNavigation(name);
-      }
+      onclick: () => handleNavigation(name)
     };
   });
 
   return [
-    // 1. 地图上的框（圈住扎堆区域）
-    {
-      type: 'rect',
-      z: 999, // 层级置顶
-      shape: { x: rectX, y: rectY, width: rectW, height: rectH },
-      style: {
-        stroke: '#FFFFFF',
-        fill: 'rgba(255, 255, 255, 0.1)', // 淡淡的白色填充
-        lineWidth: 2,
-        lineDash: [0]
-      }
-    },
-    // 2. 引导线
-    {
-      type: 'polyline',
-      z: 999, // 层级置顶
-      shape: {
-        points: [
-          [rectX, rectY + rectH / 2], // 起点：地图框左侧中间
-          [rectX - guideLineLength, rectY + rectH / 2] // 终点：向左延伸
-        ]
-      },
-      style: {
-        stroke: '#FFFFFF',
-        lineWidth: 2
-      }
-    },
-    // 3. 列表框容器
-    {
-      type: 'rect',
-      z: 999, //层级置顶
-      shape: {
-        x: listBoxX,
-        y: listBoxY,
-        width: listBoxWidth,
-        height: listBoxHeight,
-        r: 4 // 圆角
-      },
-      style: {
-        stroke: '#FFFFFF',
-        fill: 'rgba(255, 255, 255, 0.15)',
-        // fill: 'rgba(0, 0, 0, 0.5)', // 半透明黑色背景，确保文字清晰
-        lineWidth: 2
-      }
-    },
-    // 4. 列表文字
+    { type: 'rect', z: 99, shape: { x: rectX, y: rectY, width: rectW, height: rectH }, style: { stroke: '#FFFFFF', fill: 'rgba(255, 255, 255, 0.1)', lineWidth: 2, lineDash: [0] } },
+    { type: 'polyline', z: 99, shape: { points: [[rectX, rectY + rectH / 2], [listBoxX + listBoxWidth, listBoxY + listBoxHeight/2]] }, style: { stroke: '#FFFFFF', lineWidth: 2 } },
+    { type: 'rect', z: 99, shape: { x: listBoxX, y: listBoxY, width: listBoxWidth, height: listBoxHeight, r: 4 }, style: { stroke: '#FFFFFF', fill: 'rgba(255, 255, 255, 0.15)', lineWidth: 2 } },
     ...textElements
   ];
 };
 
-// 跳转函数
-const handleNavigation = (name: string) => {
-  router.push({
-    name: 'XYHDetail',
-    params: {
-      name: name
-    }
-  })
-}
+// 计算海外 Graphic (支持 align 参数)
+const getOverseasGraphicOption = (region: Region, animate: boolean) => {
+  if (!myChart) return [];
+  const currentData = overseasAlumniData.filter(d => d.region === region);
+  const elements: any[] = [];
 
-const toggleMap = (region: Region) => {
-  if (currentRegion.value === region) return;
-  currentRegion.value = region;
-  updateChartOptions();
-  updateGraphic();
-}
+  currentData.forEach((item) => {
+    const point = myChart!.convertToPixel('geo', item.coord);
+    if (!point || isNaN(point[0]) || isNaN(point[1])) return;
+
+    // 终点坐标
+    const endPointX = point[0] + item.offset[0];
+    const endPointY = point[1]; 
+
+    // === 1. 绘制水平引导线 ===
+    const startPoints = [point, point]; 
+    const finalPoints = [point, [endPointX, endPointY]];
+
+    elements.push({
+      type: 'polyline', 
+      z: 100,
+      id: `line_${item.name}`,
+      shape: { points: animate ? startPoints : finalPoints },
+      style: { 
+        stroke: '#FFFFFF', 
+        lineWidth: 2, 
+        shadowBlur: 2, 
+        shadowColor: 'rgba(0,0,0,0.5)' 
+      },
+      transition: ['shape'],
+      $action: 'replace'
+    });
+
+    // === 2. 绘制文字 (根据 align 参数决定位置) ===
+    // 如果 align 是 'left' (左对齐)，说明文字在终点的右侧
+    // 如果 align 是 'right' (右对齐)，说明文字在终点的左侧
+    const textPadding = 10;
+    const textX = item.align === 'left' 
+      ? endPointX + textPadding 
+      : endPointX - textPadding;
+
+    elements.push({
+      type: 'text', 
+      z: 101,
+      id: `text_${item.name}`,
+      left: textX,
+      top: endPointY - 10,
+      style: {
+        text: item.name,
+        fill: '#FFFFFF',
+        font: '20px "MySourceHanSerifHeavy"',
+        align: item.align, // 使用配置的 align 参数
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowBlur: 4,
+        opacity: animate ? 0 : 1 
+      },
+      transition: ['style'],
+      onclick: () => handleNavigation(item.name)
+    });
+  });
+
+  return elements;
+};
+
+// 统一 Graphic 入口
+const getGraphicOption = (isInitialRender: boolean = false) => {
+  if (currentRegion.value === 'china') {
+    return getChinaGraphicOption();
+  } else {
+    return getOverseasGraphicOption(currentRegion.value, isInitialRender);
+  }
+};
+
+// ================= 4. ECharts 配置更新 =================
 
 const updateChartOptions = () => {
   if (!myChart) return;
 
-  const defaultColors = {
-    type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-    colorStops: [
-      { offset: 0, color: '#FFFFFF' },
-      { offset: 0.3, color: '#F2A8C1' },
-      { offset: 1, color: '#FF0055' }
-    ],
-    global: false
+  // 配色方案
+  const chinaColors = { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#FFFFFF' }, { offset: 0.3, color: '#F2A8C1' }, { offset: 1, color: '#FF0055' }], global: false };
+  const northAmericaColors = { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#FFEBF0' }, { offset: 0.3, color: '#F2A8C1' }, { offset: 1, color: '#FF0055' }], global: false };
+  const oceaniaColors = { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#FFF5F7' }, { offset: 0.4, color: '#F2A8C1' }, { offset: 1, color: '#D00045' }], global: false };
+
+  let selectedColors = chinaColors;
+  if (currentRegion.value === 'north_america') selectedColors = northAmericaColors;
+  else if (currentRegion.value === 'oceania') selectedColors = oceaniaColors;
+
+  let option: any = {
+    geo: {
+      map: currentRegion.value,
+      roam: false,
+      silent: true,
+      itemStyle: {
+        areaColor: selectedColors,
+        shadowColor: '#8B1A38',
+        shadowOffsetX: -1,
+        shadowOffsetY: 20,
+        shadowBlur: 0,
+        borderColor: '#ffffff',
+        borderWidth: 1.5,
+      },
+      emphasis: { itemStyle: { areaColor: selectedColors }, label: { show: false } }
+    },
+    graphic: [], 
+    series: [] 
   };
 
-  // 北美专用配色：减少白色渐变，避免阿拉斯加因独立bbox导致过白
-  const naColors = {
-    type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-    colorStops: [
-      { offset: 0, color: '#FFF0F5' }, // 极淡的粉色 (LavenderBlush)，接近白色但带粉色调
-      { offset: 0.3, color: '#F2A8C1' }, // 恢复中间色
-      { offset: 1, color: '#FF0055' }
-    ],
-    global: false
-  };
+  if (currentRegion.value === 'china') {
+    option.geo.layoutCenter = ['48%', '60%']; 
+    option.geo.layoutSize = '92%'; 
+    option.geo.zoom = 1.3;
+    option.series = [
+      {
+        type: 'lines', coordinateSystem: 'geo', zlevel: 1, z: 2,
+        lineStyle: { color: '#FFFFFF', width: 2, opacity: 0.7, curveness: 0 },
+        data: chinaLinesData
+      },
+      {
+        type: 'scatter', coordinateSystem: 'geo', zlevel: 1, z: 3,
+        data: chinaLabelData, symbolSize: 0, silent: false,
+        label: {
+          show: true, formatter: '{b}', color: '#FFFFFF', fontSize: 22,
+          fontFamily: 'MySourceHanSerifHeavy', distance: 10
+        }
+      }
+    ];
+  } else if (currentRegion.value === 'north_america') {
+    option.geo.layoutCenter = ['45%', '50%']; 
+    option.geo.layoutSize = '90%'; 
+    option.geo.zoom = 1.2;
+  } else if (currentRegion.value === 'oceania') {
+    option.geo.layoutCenter = ['45%', '44%'];
+    option.geo.layoutSize = '95%';
+    option.geo.zoom = 1.1;
+  }
 
-  const colors = currentRegion.value === 'north_america' ? naColors : defaultColors;
+  myChart.setOption(option, true);
+};
+
+// 更新 Graphic (控制动画)
+const updateGraphic = (animate: boolean = false) => {
+  if (!myChart) return;
 
   if (currentRegion.value !== 'china') {
-    // 海外模式配置
-    const mapName = currentRegion.value;
-    const currentData = overseasAlumniData.filter(d => d.region === mapName);
+    // 1. 初始状态 (不可见)
+    const initialGraphics = getGraphicOption(animate);
+    myChart.setOption({ graphic: initialGraphics });
 
-    // 针对每个区域的特定显示配置
-    let center: number[] | undefined = undefined;
-    let zoom = 1.2;
-    let layoutCenter: string[] | undefined = undefined;
-    let layoutSize: string | undefined = undefined;
-    
-    if (mapName === 'north_america') {
-       // 北美
-       zoom = 1.8; 
-       layoutCenter = ['45%', '45%'];
-       layoutSize = '75%';
-    } else if (mapName === 'oceania') {
-       // 大洋洲
-       zoom = 1.0;
-       layoutCenter = ['50%', '45%']; // 稍微上移
-       layoutSize = '100%';
+    if (animate) {
+      // 2. 最终状态 (可见 + 生长)
+      setTimeout(() => {
+        const finalGraphics = getOverseasGraphicOption(currentRegion.value, false);
+        myChart!.setOption({ graphic: finalGraphics });
+      }, 50);
     }
-
-    const option = {
-      geo: {
-        map: mapName, // 使用过滤后的地图
-        roam: false, // 禁止缩放漫游
-        zoom: zoom,
-        center: center,
-        layoutCenter: layoutCenter,
-        layoutSize: layoutSize,
-        silent: true, // 禁止地图板块的鼠标交互（去除hover高亮/阴影）
-        label: { show: false },
-        itemStyle: {
-          areaColor: colors, // 复用配色
-          shadowColor: '#8B1A38',
-          shadowOffsetX: -1,
-          shadowOffsetY: 20,
-          shadowBlur: 0,
-          borderColor: '#ffffff',
-          borderWidth: 1,
-        },
-        emphasis: {
-          itemStyle: { areaColor: colors },
-          label: { show: false }
-        }
-      },
-      graphic: [], // 清空国内的graphic
-      series: [
-        {
-          type: 'scatter',
-          coordinateSystem: 'geo',
-          zlevel: 1,
-          z: 3,
-          data: currentData.map(item => ({
-            name: item.name,
-            value: item.coord
-          })),
-          symbolSize: 8,
-          itemStyle: {
-            color: '#FFFFFF',
-            shadowBlur: 10,
-            shadowColor: '#333'
-          },
-          label: {
-            show: true,
-            formatter: '{b}',
-            position: 'right',
-            color: '#FFFFFF',
-            fontSize: 14,
-            fontWeight: "bold",
-            fontFamily: 'MySourceHanSerifBold, Songti SC, serif',
-            distance: 10,
-            backgroundColor: 'rgba(0,0,0,0.3)',
-            padding: [4, 8],
-            borderRadius: 4
-          }
-        }
-      ]
-    };
-    myChart.setOption(option, true); // true = not merge, replace components
   } else {
-    // 国内模式配置 (原配置)
-    const option = {
-      geo: {
-        map: 'china',
-        roam: false,
-        zoom: 1.3,
-        center: null, // Reset center using layoutCenter/Size
-        layoutCenter: ['47%', '65%'],
-        layoutSize: '100%',
-        silent: true, // 禁止地图板块的鼠标交互
-        itemStyle: {
-          areaColor: colors,
-          shadowColor: '#8B1A38',
-          shadowOffsetX: -1,
-          shadowOffsetY: 20,
-          shadowBlur: 0,
-          borderColor: '#ffffff',
-          borderWidth: 2,
-        },
-        emphasis: {
-          itemStyle: { areaColor: colors },
-          label: { show: false }
-        }
-      },
-      graphic: [], // 初始为空，由updateGraphic填充
-      series: [
-        {
-          type: 'lines',
-          coordinateSystem: 'geo',
-          zlevel: 1,
-          z: 2,
-          lineStyle: {
-            color: '#FFFFFF',
-            width: 2,
-            opacity: 0.7,
-            curveness: 0
-          },
-          data: linesData
-        },
-        {
-          type: 'scatter',
-          coordinateSystem: 'geo',
-          zlevel: 1,
-          z: 3,
-          data: labelData,
-          symbolSize: 0,
-          silent: false,
-          label: {
-            show: true,
-            formatter: '{b}',
-            color: '#FFFFFF',
-            fontSize: 22,
-            fontWeight: "bolder",
-            fontFamily: 'MySourceHanSerifBold, Songti SC, serif',
-            distance: 10
-          }
-        }
-      ]
-    };
-    myChart.setOption(option, true);
+    myChart.setOption({ graphic: getGraphicOption(false) });
   }
 }
+
+// ================= 5. 生命周期 =================
 
 const initChart = () => {
   if (!chartRef.value) return;
   echarts.registerMap('china', chinaJson as any);
-  
-  // 注册北美地图
   echarts.registerMap('north_america', northAmericaJson as any);
-
-  // 注册大洋洲地图
   echarts.registerMap('oceania', oceaniaJson as any);
   
   myChart = echarts.init(chartRef.value);
   
   updateChartOptions();
+  
+  // 初始加载
+  setTimeout(() => {
+    updateGraphic(true); 
+  }, 400);
 
-  // 地图上散点响应鼠标点击事件
   myChart.on('click', (parama) => {
-    if ( parama.componentType == 'series' && parama.seriesType === 'scatter'){
+    if (parama.componentType == 'series' && parama.seriesType === 'scatter'){
       handleNavigation(parama.name)
     }
   })
-
-  updateGraphic();
-}
-
-// 独立的更新图形函数
-const updateGraphic = () => {
-  if (myChart) {
-    myChart.setOption({
-      graphic: getGraphicOption()
-    });
-  }
 }
 
 const resizeChart = () => {
   if (myChart) {
     myChart.resize();
-    updateGraphic();
+    updateGraphic(false);
   }
 }
 
@@ -473,82 +425,14 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.main-box{
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  position: relative; /* ensure absolute children position correctly */
-}
+.main-box{ width: 100%; height: 100%; background: transparent; display: flex; flex-direction: row; position: relative; }
+.box-sidebar{ width: 80px; flex-shrink: 0; z-index: 10; opacity: 0; transform: translateX(-30px); animation: slideInLeft 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; animation-delay: 0.2s; }
+@keyframes slideInLeft { to {opacity: 1; transform: translateX(0);} }
+.max-container{ flex: 1; width: 100%; height: 100%; position: relative; overflow: hidden; }
+.chart-box{ width: 100%; height: 100%; }
 
-.box-sidebar{
-  width: 80px;
-  padding: 0px;
-  margin: 0px;
-  background: transparent;
-  border-radius: 20px;
-  flex-shrink: 0;
-  /**侧边栏动画 */
-  opacity: 0;
-  transform: translateX(-30px);
-  animation: slideInLeft 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  animation-delay: 0.2s; /* 等路由动画走一点再出来 */
-}
-
-/** 添加侧边栏过渡动画 */
-@keyframes slideInLeft {
-  to {opacity: 1; transform: translateX(0);}
-}
-
-.max-container{
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.chart-box{
-  width: 100%;
-  height: 100%;
-  background: transparent;
-}
-
-.toggle-container {
-  display: flex;
-  position: absolute;
-  top: 20px;
-  right: 40px;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 30px;
-  padding: 4px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.toggle-btn {
-  padding: 8px 24px;
-  border-radius: 24px;
-  font-family: 'Songti SC', serif;
-  font-size: 18px;
-  font-weight: bold;
-  color: #FFFFFF;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.toggle-btn.active {
-  background: #FFFFFF;
-  color: #8B1A38; /* Use a brand color for active text */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
+.toggle-container { display: flex; position: absolute; bottom: 0px; left: 48%; transform: translateX(-50%); z-index: 1000; background: rgba(255, 255, 255, 0.15); border-radius: 40px; padding: 6px 10px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 4px 20px rgba(0,0,0,0.2); gap: 10px; }
+.toggle-btn { padding: 10px 30px; border-radius: 30px; font-family: 'MySourceHanSerifHeavy', serif; font-size: 18px; color: rgba(255, 255, 255, 0.8); cursor: pointer; transition: all 0.3s ease; white-space: nowrap; }
+.toggle-btn:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.toggle-btn.active { background: linear-gradient(135deg, #FFFFFF 0%, #FFE0E6 100%); color: #8B1A38; box-shadow: 0 2px 10px rgba(139, 26, 56, 0.3); transform: scale(1.05); }
 </style>

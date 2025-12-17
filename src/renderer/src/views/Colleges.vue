@@ -111,9 +111,26 @@ const goToDetail = (college: any) => {
 </script>
 
 <style scoped>
-.main-box { width: 100%; height: 100%; display: flex; background: #f5f7fa; overflow: hidden; }
+.main-box { 
+  width: 100%;
+  height: 100%;
+  display: flex; 
+  overflow: hidden; 
+  color: transparent;
+}
 .box-sidebar { width: 80px; flex-shrink: 0; z-index: 10; opacity: 0; animation: slideInLeft 0.6s forwards 0.2s; }
-.box-content-scroll { flex: 1; height: 100%; overflow-y: auto; padding: 40px; margin-left: 20px; opacity: 0; animation: fadeUp 0.6s forwards 0.3s; }
+.box-content-scroll { 
+  flex: 1; 
+  height: 100%; 
+  overflow-y: auto; 
+  padding: 40px; 
+  margin-left: 20px; 
+  margin-right: 40px;
+  opacity: 0; 
+  animation: fadeUp 0.6s forwards 0.3s; 
+  background: #f5f7fa;
+  border-radius: 12px;
+}
 
 .header-title { margin-bottom: 30px; border-left: 5px solid #9E1F35; padding-left: 20px; }
 .header-title h2 { font-size: 32px; color: #333; margin: 0; font-family: 'Songti SC', serif; font-weight: bold; }
