@@ -92,44 +92,43 @@ const chinaLabelData = normalData.map(item => ({
   label: { position: item.align === 'left' ? 'left' : 'right' }
 }));
 
-// 海外数据配置 (已添加 align 参数)
-// offset: [X轴偏移量, 0]。Y轴固定为0以保持水平。
+// 海外数据配置 (统一样式：使用 from -> to 坐标连线)
 const overseasAlumniData = [
   // 北美
   { 
     name: '美国加州校友分会', 
-    coord: [-119.4179, 36.7783], 
+    from: [-119.4179, 36.7783], 
+    to: [-140, 36.7783], // 拉长线到左侧
     region: 'north_america', 
-    offset: [-180, 0], 
     align: 'left' 
   }, 
   { 
     name: '加拿大校友联谊会', 
-    coord: [-106.3468, 56.1304], 
+    from: [-106.3468, 56.1304], 
+    to: [-43, 56.1304], // 拉到右侧
     region: 'north_america', 
-    offset: [180, 0], 
     align: 'right' 
   }, 
   { 
     name: '多伦多校友联谊会', 
-    coord: [-79.3832, 43.6532], 
+    from: [-79.3832, 43.6532], 
+    to: [-52, 43.6532], // 拉到右侧
     region: 'north_america', 
-    offset: [200, 0], 
     align: 'right' 
   }, 
   // 大洋洲
   { 
     name: '澳洲校友联谊会', 
-    coord: [133.7751, -25.2744], 
+    from: [133.7751, -25.2744], 
+    to: [160, -25.2744], // 拉到右侧
     region: 'oceania', 
-    offset: [220, 0], 
     align: 'right' 
   }, 
   { 
     name: '新西兰校友联谊会', 
-    coord: [174.8860, -40.9006], 
+    from: [174.8860, -40.9006], 
+    to: [179, -40.9006], // 拉到右侧
     region: 'oceania', 
-    offset: [150, 0], 
     align: 'right' 
   }, 
 ];
@@ -147,18 +146,16 @@ const toggleMap = (region: Region) => {
   if (currentRegion.value === region) return;
   currentRegion.value = region;
   
-  // 1. 切换地图底图配置
-  updateChartOptions();
+  // 切换时清空当前实例，确保重新触发入场动画  // 切换地图底图配置
+  // if (myChart) myChart.clear(); // 移除 clear，通过 series id 控制动画
   
-  // 2. 延迟绘制引导线动画 (400ms 确保地图渲染完成)
-  setTimeout(() => {
-    updateGraphic(true); // true = 播放生长动画
-  }, 400);
+  updateChartOptions();
+  updateGraphic();
 }
 
 // ================= 3. Graphic 绘制逻辑 =================
 
-// 国内扎堆区域 Graphic (保持不变)
+// 国内扎堆区域 Graphic
 const getChinaGraphicOption = () => {
   if (!myChart) return [];
   const clusterGeoRect = { topLeft: [112.5, 24.5], bottomRight: [117.5, 21.5] };
@@ -180,7 +177,7 @@ const getChinaGraphicOption = () => {
   const rows = Math.ceil(totalCount / 2);
   const listBoxWidth = singleColWidth * 2 + padding * 2 + gap;
   const listBoxHeight = rows * lineHeight + padding * 2;
-  const guideLineLength = 240; 
+  const guideLineLength = 320; // 增加长度，使列表更靠左
   const listBoxX = rectX - guideLineLength - listBoxWidth;
   const listBoxY = rectY + (rectH / 2) - (listBoxHeight / 2);
 
@@ -217,76 +214,13 @@ const getChinaGraphicOption = () => {
   ];
 };
 
-// 计算海外 Graphic (支持 align 参数)
-const getOverseasGraphicOption = (region: Region, animate: boolean) => {
-  if (!myChart) return [];
-  const currentData = overseasAlumniData.filter(d => d.region === region);
-  const elements: any[] = [];
-
-  currentData.forEach((item) => {
-    const point = myChart!.convertToPixel('geo', item.coord);
-    if (!point || isNaN(point[0]) || isNaN(point[1])) return;
-
-    // 终点坐标
-    const endPointX = point[0] + item.offset[0];
-    const endPointY = point[1]; 
-
-    // === 1. 绘制水平引导线 ===
-    const startPoints = [point, point]; 
-    const finalPoints = [point, [endPointX, endPointY]];
-
-    elements.push({
-      type: 'polyline', 
-      z: 100,
-      id: `line_${item.name}`,
-      shape: { points: animate ? startPoints : finalPoints },
-      style: { 
-        stroke: '#FFFFFF', 
-        lineWidth: 2, 
-        shadowBlur: 2, 
-        shadowColor: 'rgba(0,0,0,0.5)' 
-      },
-      transition: ['shape'],
-      $action: 'replace'
-    });
-
-    // === 2. 绘制文字 (根据 align 参数决定位置) ===
-    // 如果 align 是 'left' (左对齐)，说明文字在终点的右侧
-    // 如果 align 是 'right' (右对齐)，说明文字在终点的左侧
-    const textPadding = 10;
-    const textX = item.align === 'left' 
-      ? endPointX + textPadding 
-      : endPointX - textPadding;
-
-    elements.push({
-      type: 'text', 
-      z: 101,
-      id: `text_${item.name}`,
-      left: textX,
-      top: endPointY - 10,
-      style: {
-        text: item.name,
-        fill: '#FFFFFF',
-        font: '20px "MySourceHanSerifHeavy"',
-        align: item.align, // 使用配置的 align 参数
-        textShadowColor: 'rgba(0,0,0,0.5)',
-        textShadowBlur: 4,
-        opacity: animate ? 0 : 1 
-      },
-      transition: ['style'],
-      onclick: () => handleNavigation(item.name)
-    });
-  });
-
-  return elements;
-};
-
 // 统一 Graphic 入口
-const getGraphicOption = (isInitialRender: boolean = false) => {
+const getGraphicOption = () => {
   if (currentRegion.value === 'china') {
     return getChinaGraphicOption();
   } else {
-    return getOverseasGraphicOption(currentRegion.value, isInitialRender);
+    // 海外全部用 Series 绘制，不需要 Graphic
+    return []; 
   }
 };
 
@@ -301,14 +235,61 @@ const updateChartOptions = () => {
   const oceaniaColors = { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#FFF5F7' }, { offset: 0.4, color: '#F2A8C1' }, { offset: 1, color: '#D00045' }], global: false };
 
   let selectedColors = chinaColors;
-  if (currentRegion.value === 'north_america') selectedColors = northAmericaColors;
-  else if (currentRegion.value === 'oceania') selectedColors = oceaniaColors;
+  let layoutCenter = ['48%', '60%'];
+  let layoutSize = '92%';
+  let zoom = 1.3;
+  let currentLinesData: any[] = [];
+  let currentLabelData: any[] = [];
+
+  if (currentRegion.value === 'china') {
+    selectedColors = chinaColors;
+    layoutCenter = ['48%', '60%'];
+    layoutSize = '92%';
+    zoom = 1.3;
+    currentLinesData = chinaLinesData;
+    currentLabelData = chinaLabelData;
+  } else if (currentRegion.value === 'north_america') {
+    selectedColors = northAmericaColors;
+    layoutCenter = ['45%', '50%'];
+    layoutSize = '90%';
+    zoom = 1.2;
+    // 构造显示数据
+    const naData = overseasAlumniData.filter(item => item.region === 'north_america');
+    currentLinesData = naData.map(item => ({ coords: [item.from, item.to] }));
+    currentLabelData = naData.map(item => ({
+      name: item.name,
+      value: item.to,
+      label: { 
+        position: item.align === 'left' ? 'left' : 'right',
+        distance: 15 // 增加间距防止遮挡
+      }
+    }));
+  } else if (currentRegion.value === 'oceania') {
+    selectedColors = oceaniaColors;
+    layoutCenter = ['45%', '44%'];
+    layoutSize = '95%';
+    zoom = 1.1;
+    // 构造显示数据
+    const ocData = overseasAlumniData.filter(item => item.region === 'oceania');
+    currentLinesData = ocData.map(item => ({ coords: [item.from, item.to] }));
+    currentLabelData = ocData.map(item => ({
+      name: item.name,
+      value: item.to,
+      label: { 
+        position: item.align === 'left' ? 'left' : 'right',
+        distance: 15 
+      }
+    }));
+  }
 
   let option: any = {
     geo: {
       map: currentRegion.value,
       roam: false,
       silent: true,
+      zoom: zoom,
+      layoutCenter: layoutCenter,
+      layoutSize: layoutSize,
       itemStyle: {
         areaColor: selectedColors,
         shadowColor: '#8B1A38',
@@ -320,61 +301,46 @@ const updateChartOptions = () => {
       },
       emphasis: { itemStyle: { areaColor: selectedColors }, label: { show: false } }
     },
+    // 将 Graphic 初始化为空，避免未渲染时调用 convertToPixel 导致报错
     graphic: [], 
-    series: [] 
-  };
-
-  if (currentRegion.value === 'china') {
-    option.geo.layoutCenter = ['48%', '60%']; 
-    option.geo.layoutSize = '92%'; 
-    option.geo.zoom = 1.3;
-    option.series = [
+    series: [
       {
+        id: 'lines_' + currentRegion.value, // 绑定ID以强制触发入场动画
         type: 'lines', coordinateSystem: 'geo', zlevel: 1, z: 2,
-        lineStyle: { color: '#FFFFFF', width: 2, opacity: 0.7, curveness: 0 },
-        data: chinaLinesData
+        lineStyle: { 
+          color: '#FFFFFF', 
+          width: 2, 
+          opacity: 0.7, // 统一透明度
+          curveness: 0 
+        },
+        data: currentLinesData
       },
       {
+        id: 'scatter_' + currentRegion.value,
         type: 'scatter', coordinateSystem: 'geo', zlevel: 1, z: 3,
-        data: chinaLabelData, symbolSize: 0, silent: false,
+        data: currentLabelData, 
+        symbolSize: 20, // 增大点击区域
+        itemStyle: { color: 'transparent' }, // 隐藏圆点但保留点击
+        silent: false,
         label: {
-          show: true, formatter: '{b}', color: '#FFFFFF', fontSize: 22,
-          fontFamily: 'MySourceHanSerifHeavy', distance: 10
+          show: true, 
+          formatter: '{b}', 
+          color: '#FFFFFF', 
+          fontSize: 22, // 统一字号
+          fontFamily: 'MySourceHanSerifHeavy',
+          // distance已在数据中定义
         }
       }
-    ];
-  } else if (currentRegion.value === 'north_america') {
-    option.geo.layoutCenter = ['45%', '50%']; 
-    option.geo.layoutSize = '90%'; 
-    option.geo.zoom = 1.2;
-  } else if (currentRegion.value === 'oceania') {
-    option.geo.layoutCenter = ['45%', '44%'];
-    option.geo.layoutSize = '95%';
-    option.geo.zoom = 1.1;
-  }
+    ]
+  };
 
   myChart.setOption(option, true);
 };
 
-// 更新 Graphic (控制动画)
-const updateGraphic = (animate: boolean = false) => {
+// 更新 Graphic (国内地图调整窗口大小时用到)
+const updateGraphic = () => {
   if (!myChart) return;
-
-  if (currentRegion.value !== 'china') {
-    // 1. 初始状态 (不可见)
-    const initialGraphics = getGraphicOption(animate);
-    myChart.setOption({ graphic: initialGraphics });
-
-    if (animate) {
-      // 2. 最终状态 (可见 + 生长)
-      setTimeout(() => {
-        const finalGraphics = getOverseasGraphicOption(currentRegion.value, false);
-        myChart!.setOption({ graphic: finalGraphics });
-      }, 50);
-    }
-  } else {
-    myChart.setOption({ graphic: getGraphicOption(false) });
-  }
+  myChart.setOption({ graphic: getGraphicOption() });
 }
 
 // ================= 5. 生命周期 =================
@@ -389,10 +355,10 @@ const initChart = () => {
   
   updateChartOptions();
   
-  // 初始加载
+  // 初始加载Graphic
   setTimeout(() => {
-    updateGraphic(true); 
-  }, 400);
+    updateGraphic(); 
+  }, 200);
 
   myChart.on('click', (parama) => {
     if (parama.componentType == 'series' && parama.seriesType === 'scatter'){
@@ -404,7 +370,7 @@ const initChart = () => {
 const resizeChart = () => {
   if (myChart) {
     myChart.resize();
-    updateGraphic(false);
+    updateGraphic();
   }
 }
 
