@@ -27,7 +27,8 @@ const currentBG = computed(()=>{
         'Colleges': bg,
         'Oustanding': bg,
         'Gallery': bg,
-        'XYHDetail': distributionGB
+        'XYHDetail': distributionGB,
+        'IndustryList': distributionGB,
     }
 
     return bGMap[route.name as string] || bg

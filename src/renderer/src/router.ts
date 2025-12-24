@@ -49,7 +49,7 @@ const routes: RouteRecordRaw[] = [
             },
             {
                 // 校友分会详情页面
-                path: 'distribution/detail/:name',
+                path: 'distribution/detail',
                 name: 'XYHDetail',
                 component: () => import('@/views/XYHDetail.vue'),
             },
@@ -83,6 +83,12 @@ const routes: RouteRecordRaw[] = [
                 path: 'gallery/detail/:year',
                 name: 'GalleryDetail',
                 component: () => import('@/views/GalleryDetail.vue')
+            },
+            {
+                // 行业校友会列表页
+                path: 'industry-list',
+                name: 'IndustryList',
+                component: () => import('@/views/IndustryList.vue'),
             }
         ]
     },
