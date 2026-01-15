@@ -6,6 +6,9 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
+// 引入vue-virtual-scroller样式
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+
 const app = createApp(App)
 
 app.use(ElementPlus).use(router).mount('#app')

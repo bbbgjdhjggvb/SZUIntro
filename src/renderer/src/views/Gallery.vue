@@ -1,6 +1,5 @@
 <template>
   <div class="main-box">
-    <!-- 侧边栏保持不变 -->
     <div class="box-sidebar slide-in-left">
       <SideBar></SideBar>
     </div>

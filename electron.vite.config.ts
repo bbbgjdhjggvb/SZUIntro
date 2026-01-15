@@ -4,7 +4,13 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    // sharp是c++扩展包，不能被vite打包
+    build: {
+      rollupOptions: {
+        external: ['sharp']
+      }
+    }
   },
   preload: {
     plugins: [externalizeDepsPlugin()]

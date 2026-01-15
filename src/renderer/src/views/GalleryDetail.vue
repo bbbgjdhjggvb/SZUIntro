@@ -21,7 +21,7 @@
           >
             <!-- 图片容器 (移除了遮罩层 overlay) -->
             <div class="img-wrapper">
-              <img :src="getSafeUrl(item.displayName)" loading="lazy" />
+              <img :src="getSafeUrl(item.displayName, 'thumb')"/>
             </div>
             <!-- 标题 -->
             <div class="card-footer">
@@ -74,10 +74,11 @@ const fullScreen = reactive({
   title: ''
 })
 
-const getSafeUrl = (path: string) => {
-  let safePath = path.replace(/\\/g, '/')
-  if(safePath.startsWith('/')) safePath = safePath.slice(1)
-  return "local-image://" + safePath
+const getSafeUrl = (path: string, type: 'thumb' | 'original' = 'original') => {
+  let safePath = path.replace(/\\/g, '/');
+  if(safePath.startsWith('/')) safePath = safePath.slice(1);
+  const baseUrl = "local-image://" + safePath;
+  return type === 'thumb' ? `${baseUrl}?type=thumb`:baseUrl;
 }
 
 const loadPhotos = async () => {
@@ -95,7 +96,7 @@ const loadPhotos = async () => {
 }
 
 const openFullScreen = (item: PhotoItem) => {
-  fullScreen.url = getSafeUrl(item.displayName)
+  fullScreen.url = getSafeUrl(item.displayName, 'original')
   fullScreen.title = item.title || '未命名照片'
   fullScreen.show = true
 }
@@ -110,12 +111,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 
-   核心布局调整思路：
-   1. main-box 背景透明。
-   2. box-content-scroll 设置白色背景，并设置 margin。
-*/
-
 .main-box {
   width: 100%;
   height: 100%;

@@ -1,25 +1,14 @@
-import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { extname, join, posix } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import fs from 'fs';
 import path from 'path';
-import { pathToFileURL } from 'url';
 
-// 获取动态资源的根目录
-function getDynamicAssetsPath() {
-  if (app.isPackaged) {
-    // 生成环境
-    const rpath = path.posix.join(process.resourcesPath, 'external');
-    return  rpath
-  } else {
-    // 开发环境：资源位于项目根目录的resources/external
-    const rpath = path.posix.join(app.getAppPath(), 'resources', 'external');
-    // console.log('Dynamic assets path (dev):', path);
-    return rpath
-  }
-}
+// 自定义包
+import { registerLocalImageProtocol} from './protocols/local_image'
+import { getDynamicAssetsPath } from './utils/paths';
 
 function createWindow(): void {
   // Create the browser window.
@@ -108,8 +97,6 @@ ipcMain.handle('get-image-files-in-dir', async (_event, dirpath: string) => {
   // dirpath前面可能有 '/'，需要删除
   const cleanDirPath = dirpath.startsWith('/') ? dirpath.slice(1) : dirpath
   const fullPath = path.posix.join(getDynamicAssetsPath(), cleanDirPath);
-
-  // console.log('Scanning Dir: ' + fullPath)
 
   try{
     if(!fs.existsSync(fullPath)){
@@ -205,20 +192,8 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
-  // 自定义读取图片的协议，对照片读取进行优化
-  protocol.handle('local-image', (request) =>{
-    const url = request.url.replace('local-image://', '');
-
-    // 解码url，处理中文路径，特殊字符
-    const decodedPath = decodeURIComponent(url);
-    const rootDir = getDynamicAssetsPath();
-
-    const fullPath = path.posix.join(rootDir, decodedPath);
-
-    // console.log('Loading image from local-image protocol:', fullPath);
-
-    return net.fetch(pathToFileURL(fullPath).toString());
-  })
+  // 注册图片读取协议
+  registerLocalImageProtocol(getDynamicAssetsPath);
 
   createWindow()
 
