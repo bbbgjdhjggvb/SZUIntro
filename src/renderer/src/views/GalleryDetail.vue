@@ -251,10 +251,13 @@ onMounted(() => {
   font-size: 15px; /* 字体稍微大一点方便阅读 */
   color: #444;
   text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-weight: 500;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.4;
+  word-break: break-all;
+  padding: 0 5px;
 }
 
 .bottom-spacer { height: 60px; }
