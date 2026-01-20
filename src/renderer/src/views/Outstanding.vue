@@ -1,5 +1,6 @@
 <template>
   <div class="main-box">
+    <!-- 侧边栏：添加 translate3d 开启硬件加速 -->
     <div class="box-sidebar slide-in-left">
       <SideBar theme="light"></SideBar>
     </div>
@@ -11,35 +12,35 @@
       </button>
 
       <!-- Grid 内容区 -->
-      <!-- 添加 :key="currentPage" 确保翻页时重新触发动画 -->
-      <div class="grid-container" :key="currentPage">
-        <div
-          v-for="(outstanding, index) in displayedOutstandings"
-          :key="outstanding.id || index"
-          class="alunmi-card"
-          :style="{ '--delay': (index * 0.08) + 's' }" 
-          @click="openModal(outstanding)" 
-        >
-           <div class="card-img-box">
-            <!--添加 @load 事件处理图片淡入 -->
-            <img 
-              :src="outstanding.image" 
-              class="avater" 
-              loading="lazy"
-              @load="onImgLoad"
-            />
-           </div>
+      <!-- mode="out-in" 确保上一页完全消失后，下一页再显示，减少同时渲染两页的性能压力 -->
+      <transition name="page-fade" mode="out-in">
+        <div class="grid-container" :key="currentPage">
+          <div
+            v-for="(outstanding, index) in displayedOutstandings"
+            :key="outstanding.id || index"
+            class="alunmi-card"
+            @click="openModal(outstanding)" 
+          >
+             <div class="card-img-box">
+              <img 
+                :src="outstanding.image" 
+                class="avater" 
+                loading="lazy"
+                @load="onImgLoad"
+              />
+             </div>
 
-           <div class="card-content">
-            <h3 class="name">{{ outstanding.name }}</h3>
-            <p class="meta">
-              <span>{{ outstanding.year }}级</span>
-              <span v-if="outstanding.year && outstanding.major">|</span>
-              <span>{{ outstanding.major }}</span>
-            </p>
-           </div>
+             <div class="card-content">
+              <h3 class="name">{{ outstanding.name }}</h3>
+              <p class="meta">
+                <span>{{ outstanding.year }}级</span>
+                <span v-if="outstanding.year && outstanding.major">|</span>
+                <span>{{ outstanding.major }}</span>
+              </p>
+             </div>
+          </div>
         </div>
-      </div>
+      </transition>
 
       <!-- 右前进按钮 -->
       <button class="nav-btn next-btn" @click="nextPage" :disabled="currentPage === totalPages">
@@ -122,7 +123,7 @@ const closeModal = () => {
   showModal.value = false
 }
 
-//图片加载回调，赋予 loaded 类名
+// 图片加载优化：只在加载完成后显示
 const onImgLoad = (e: Event) => {
   const target = e.target as HTMLImageElement
   if (target) {
@@ -140,28 +141,11 @@ onMounted(async () => {
       return {
         ...e,
         image: realImgUrl || '',
-        description: e.description || '杰出校友，在各自领域均有建树，为社会做出了重要贡献。深圳大学校友会致力于联络校友，弘扬母校传统，促进校友事业发展。'
+        description: e.description || '暂无资料'
       }
     });
     let processedData = await Promise.all(imgUrlProcTask)
 
-    const totalTarget = 105
-    if (processedData.length < totalTarget) {
-        const mockCount = totalTarget - processedData.length
-        const placeholderImg = processedData.length > 0 ? processedData[0].image : '' 
-        const mockDesc = "这里是校友的详细介绍文本..."
-
-        for (let i = 0; i < mockCount; i++) {
-            processedData.push({
-                id: 9999 + i,
-                name: `姓名${i}`,
-                year: '1990',
-                major: '会计专业',
-                image: placeholderImg,
-                description: mockDesc
-            })
-        }
-    }
     outstandings.value = processedData
   } catch (error) {
     console.error('Failed to load alumni data:', error)
@@ -180,20 +164,23 @@ onMounted(async () => {
   flex-direction: row;
   background: transparent;
   align-items: stretch;
+  overflow: hidden; /* 防止动画溢出 */
 }
 
+/* 侧边栏优化：使用 translate3d */
 .box-sidebar {
   width: 80px;
   position: relative;
   z-index: 10;
   opacity: 0; 
-  transform: translateX(-30px);
-  animation: slideInLeft 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  animation-delay: 0.2s;
+  /* translate3d(0,0,0) 开启 GPU 加速 */
+  transform: translate3d(-30px, 0, 0); 
+  animation: slideInLeft 0.5s ease-out forwards;
+  animation-delay: 0.1s;
 }
 
 @keyframes slideInLeft {
-  to { opacity: 1; transform: translateX(0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 .box-content {
@@ -201,11 +188,11 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   justify-content: flex-start; 
-  padding-top: 20px; 
+  padding-top: 0px; 
   align-items: center;
   position: relative;
-  padding-left: 40px;
-  padding-right: 40px;
+  padding-left: 20px;
+  padding-right: 20px;
   margin-right: 80px;
   margin-left: 10px;
 }
@@ -215,80 +202,90 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(3, auto);
-  gap: 20px 24px;
+  gap: 10px 10px;
   width: 100%;
   max-width: 1200px;
   padding: 10px;
-  /* 确保整个容器在重绘时稳定 */
   min-height: 600px; 
+  /* 性能优化：告知浏览器即将变化，提前分配层级 */
+  will-change: opacity, transform;
 }
 
-/* Card Styles */
+/* Card Styles - 性能优化版 */
 .alunmi-card {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(158, 31, 53, 0.08);
+  /* 使用静态阴影，不要 transition box-shadow */
+  box-shadow: 0 4px 10px rgba(158, 31, 53, 0.08); 
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 9px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
-  
-  /* 修改点4：优化卡片入场动画 */
+  /* 仅对 transform 进行过渡，性能开销小 */
+  transition: transform 0.1s ease-out, background-color 0.2s;
+  /* 修复 webkit 字体抗锯齿 */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 移除 Hover，改为 Active (触摸按下) */
+.alunmi-card:active {
+  /* 简单的缩放反馈，比阴影变化更流畅 */
+  transform: scale(0.96); 
+  background-color: #f5f5f5; 
+}
+
+/* 页面切换动画 - 渐进渐出优化 */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  /* 缩短动画时间到 0.25s 提升响应感 */
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.page-fade-enter-from {
   opacity: 0;
-  transform: translateY(20px); /* 初始位置向下偏移 */
-  animation: cardEnter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  /* 关键：使用 JS 传入的变量控制延迟 */
-  animation-delay: var(--delay); 
+  /* 使用 translate3d 减少重绘 */
+  transform: translate3d(0, 10px, 0); 
 }
 
-.alunmi-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(158, 31, 53, 0.15);
-  /* 鼠标悬浮时覆盖 animation 的 transform 状态 */
-  transition: transform 0.3s ease;
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -10px, 0);
 }
 
-/* 新定义的卡片入场动画：从下往上浮出，透明度从0到1 */
-@keyframes cardEnter {
-  from { 
-    opacity: 0; 
-    transform: translateY(30px) scale(0.95); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0) scale(1); 
-  }
-}
-
+/* 图片容器 */
 .card-img-box {
-  width: 90px;
-  height: 90px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   overflow: hidden;
   margin-bottom: 12px;
+
   border: 3px solid #f8f8f8;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   position: relative;
   flex-shrink: 0;
-  background: #f0f0f0; /* 图片未加载时的背景色 */
+  background: #e0e0e0; /* 纯色背景比 loading图 更省资源 */
 }
 
-/* 图片默认透明，加载后通过 .loaded 类淡入 */
+/* 图片加载淡入 */
 .avater {
   width: 100%;
   height: 100%;
+
   object-fit: cover;
-  object-position: top center; 
+  /** 对齐头部，防止切掉头部 */
+  object-position: top center;
+
   display: block;
   opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity 0.3s ease; /* 简单的透明度过渡 */
+
+  border-radius: 12px;
 }
 
 .avater.loaded {
   opacity: 1;
-  transform: scale(1);
 }
 
 .card-content {
@@ -314,7 +311,7 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-/* Navigation Buttons */
+/* Buttons - 移除 Hover */
 .nav-btn {
   position: absolute;
   top: 45%; 
@@ -329,14 +326,19 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(158, 31, 53, 0.3);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(158, 31, 53, 0.3);
   z-index: 20;
+  /* 移除 transition all，仅特定属性 */
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.nav-btn:active {
+  transform: translateY(-50%) scale(0.9);
+  background: #7d182a;
 }
 
 .nav-btn:disabled {
   background: #ccc;
-  cursor: not-allowed;
   opacity: 0.5;
   box-shadow: none;
 }
@@ -346,7 +348,7 @@ onMounted(async () => {
 
 .icon { width: 54px; height: 54px; }
 
-/* Modal Styles - 保持不变 */
+/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -354,7 +356,8 @@ onMounted(async () => {
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
+  /* 模糊滤镜非常消耗性能，低性能设备建议移除或减少 px */
+  backdrop-filter: blur(4px); 
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -371,7 +374,13 @@ onMounted(async () => {
   position: relative;
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   overflow: hidden;
-  animation: modalScaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* 简化 Modal 动画 */
+  animation: modalPop 0.2s ease-out;
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .close-btn {
@@ -382,80 +391,21 @@ onMounted(async () => {
   border: none;
   font-size: 32px;
   color: #999;
-  cursor: pointer;
   z-index: 10;
-  transition: color 0.2s;
+  padding: 10px;
 }
-.close-btn:hover { color: #333; }
+.close-btn:active { color: #333; }
 
 .modal-body { display: flex; width: 100%; height: 100%; }
+.modal-img-container { flex: 0 0 45%; background: #f0f0f0; overflow: hidden; }
+.modal-img { width: 100%; height: 100%; object-fit: cover; }
+.modal-text-container { flex: 1; padding: 50px 40px; display: flex; flex-direction: column; }
+.modal-name { font-family: 'Songti SC', serif; font-size: 36px; color: #333; margin-bottom: 10px; font-weight: bold; }
+.modal-meta { font-size: 16px; color: #9E1F35; margin-bottom: 20px; }
+.modal-border { width: 40px; height: 4px; background: #9E1F35; margin-bottom: 30px; }
+.modal-desc-scroll { flex: 1; overflow-y: auto; padding-right: 10px; -webkit-overflow-scrolling: touch; } /* 开启 iOS 滚动回弹 */
+.modal-desc { font-size: 15px; line-height: 1.8; color: #555; text-align: justify; }
 
-.modal-img-container {
-  flex: 0 0 45%; 
-  background: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.modal-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; 
-}
-
-.modal-text-container {
-  flex: 1;
-  padding: 50px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.modal-name {
-  font-family: 'Songti SC', serif;
-  font-size: 36px;
-  color: #333;
-  margin: 0 0 10px 0;
-  font-weight: bold;
-}
-
-.modal-meta {
-  font-size: 16px;
-  color: #9E1F35;
-  margin-bottom: 20px;
-}
-
-.modal-border {
-  width: 40px;
-  height: 4px;
-  background: #9E1F35;
-  margin-bottom: 30px;
-}
-
-.modal-desc-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 10px;
-  width: 100%;
-}
-
-.modal-desc-scroll::-webkit-scrollbar { width: 6px; }
-.modal-desc-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 3px; }
-
-.modal-desc {
-  font-size: 15px;
-  line-height: 1.8;
-  color: #555;
-  text-align: justify;
-}
-
-@keyframes modalScaleIn {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>
