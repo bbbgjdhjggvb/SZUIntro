@@ -32,7 +32,7 @@ import logo from '@/assets/logo.png'
 
 const isLoading = ref(true)
 const progress = ref(0)
-const loadingText = ref('正在加載資源...')
+const loadingText = ref('正在加載资源...')
 
 const imagesToPreload = [
   Alum_BG,
@@ -94,7 +94,7 @@ const fetchGalleryImages = async () => {
   const endYear = 2021
   const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i)
   
-  loadingText.value = '正在獲取圖冊列表...'
+  loadingText.value = '正在获取图册列表...'
   
   const allImages: string[] = []
   
@@ -238,7 +238,7 @@ onMounted(async () => {
     console.log(`- Colleges: ${collegeImages.length}`)
     console.log(`- Industry: ${industryImages.length}`)
     
-    loadingText.value = `正在緩存 ${allImages.length} 張圖片...`
+    loadingText.value = `正在緩存 ${allImages.length} 张图片...`
     
     // 2. Preload everything
     await preloadImages(allImages)

@@ -159,14 +159,14 @@ const loadYearPhotos = async (year: number) => {
     if (items && Array.isArray(items) && items.length > 0) {
       photoItems.value = items 
 
-      // 取前 8 张轮播
-      const slideItems = items.slice(0, 8)
+      // 取前 4 张轮播
+      const slideItems = items.slice(0, 4)
       
       const urlTasks = slideItems.map(async (filePath) => {
         // '/'安全处理，即使后端传回
         let safePath = filePath.displayName.replace(/\\/g, '/')
         if(safePath.startsWith('/')) safePath = safePath.slice(1)
-        return "local-image://" + safePath
+        return "local-image://" + safePath + "?type=thumb"
       })
       
       previewPhotos.value = await Promise.all(urlTasks)
