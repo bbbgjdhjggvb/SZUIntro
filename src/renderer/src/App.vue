@@ -107,7 +107,8 @@ const fetchGalleryImages = async () => {
         return items.map((item: any) => {
           let safePath = item.displayName.replace(/\\/g, '/')
           if(safePath.startsWith('/')) safePath = safePath.slice(1)
-          return "local-image://" + safePath
+          // Use thumbnail for preloading
+          return "local-image://" + safePath + "?type=thumb"
         })
       }
     } catch (e) {
@@ -129,7 +130,8 @@ const fetchOutstandingImages = async () => {
     if (data && data.outstanding_alumni) {
       return data.outstanding_alumni.map((item: any) => {
         if (item.image) {
-           return 'local-image:/' + item.image
+           // Use thumbnail for preloading
+           return 'local-image:/' + item.image + "?type=thumb"
         }
         return ''
       }).filter((url: string) => url !== '')
@@ -153,7 +155,8 @@ const fetchCollegeImages = async () => {
               const images = await (window as any).fileReadApi.getFlatDirImages(college.images)
               if (images && images.length > 0) {
                  // Preload only the cover (first image) as that's what shown in list
-                 return 'local-image://' + images[0]
+                 // Use thumbnail for preloading
+                 return 'local-image://' + images[0] + "?type=thumb"
               }
             } catch (e) {
                console.warn(`Failed to preload college images for ${college.name}`)
@@ -190,7 +193,8 @@ const fetchIndustryImages = async () => {
         try {
           const images = await (window as any).fileReadApi.getFlatDirImages(item.images)
           if (images && images.length > 0) {
-            return 'local-image://' + images[0]
+            // Use thumbnail for preloading
+            return 'local-image://' + images[0] + "?type=thumb"
           }
         } catch (e) {
           console.warn(`Failed to preload industry images for ${item.name}`)
