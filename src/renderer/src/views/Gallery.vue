@@ -114,7 +114,7 @@ import 'swiper/css/effect-fade' // 引入淡入淡出样式
 import { Autoplay, EffectFade } from 'swiper/modules'
 
 import { ref, watch} from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 
 const modules = [Autoplay, EffectFade]
 
@@ -137,7 +137,6 @@ const inityear = () => {
       return y;
     }
   }
-
   return startYear;
 };
 const currentYear = ref(inityear())
@@ -191,9 +190,16 @@ const enterDetail = (year: number) => {
   });
 };
 
-// 添加监听currentYear变化，并进行存储
+onBeforeRouteLeave((to) => {
+  // 如果离开去的不是详情页，就清除记录，下次进来就是重新开始
+  if (to.name !== 'GalleryDetail') {
+    sessionStorage.removeItem(STORAGE_KEY)
+  }
+})
+
+// 监听 currentYear 变化，加载对应照片
 watch(currentYear, (newYear) => {
-  sessionStorage.setItem(STORAGE_KEY, newYear.toString());
+  sessionStorage.setItem(STORAGE_KEY, newYear.toString())
   loadYearPhotos(newYear)
 }, { immediate: true })
 
