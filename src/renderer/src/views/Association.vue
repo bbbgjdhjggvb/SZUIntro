@@ -61,7 +61,7 @@ onMounted(async () => {
     if(data && data.association) {
         associationData.value = data.association;
         // 如果你需要转换图片路径
-        associationData.value.images = ['local-image://association/assoc_1.png']
+        associationData.value.images = ['local-image://association/assoc_1.jpg']
     }
   } catch (error) {
     console.error('Failed to load association data:', error)

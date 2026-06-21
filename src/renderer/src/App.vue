@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 
-// Import all critical assets
+// 提前加载静态资源图片
 import Alum_BG from '@/assets/Alum_BG.png'
 import BackIcon from '@/assets/BackIcon.png'
 import College_Associa_BG from '@/assets/College_Associa_BG.png'
@@ -56,8 +56,7 @@ const preloadImages = async (imageUrls: string[]) => {
   
   if (total === 0) return
 
-  // Concurrency limit to avoid overwhelming the network/disk
-  const CONCURRENCY_LIMIT = 10 
+  const CONCURRENCY_LIMIT = 10  // 限制同时运行的核心数量
   const queue = [...imageUrls]
   
   const worker = async () => {

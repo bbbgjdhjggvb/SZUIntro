@@ -12,7 +12,6 @@
       </button>
 
       <!-- Grid 内容区 -->
-      <!-- mode="out-in" 确保上一页完全消失后，下一页再显示，减少同时渲染两页的性能压力 -->
       <transition name="page-fade" mode="out-in">
         <div class="grid-container" :key="currentPage">
           <div
@@ -31,7 +30,12 @@
              </div>
 
              <div class="card-content">
-              <h3 class="name">{{ outstanding.name }}</h3>
+              <!-- 修改点 1：名字处添加 span 包裹，并绑定动态 class -->
+              <h3 class="name">
+                <span :class="{ 'deceased-frame': outstanding.is_deceased }">
+                  {{ outstanding.name }}
+                </span>
+              </h3>
               <p class="meta">
                 <span>{{ outstanding.year }}级</span>
                 <span v-if="outstanding.year && outstanding.major">|</span>
@@ -60,7 +64,12 @@
             </div>
             
             <div class="modal-text-container">
-              <h2 class="modal-name">{{ currentAlumni.name }}</h2>
+              <!-- 修改点 2：详情弹窗的名字也同步添加该效果 -->
+              <h2 class="modal-name">
+                 <span :class="{ 'deceased-frame': currentAlumni.is_deceased }">
+                    {{ currentAlumni.name }}
+                 </span>
+              </h2>
               <p class="modal-meta">
                  {{ currentAlumni.year }}级 {{ currentAlumni.major }}
               </p>
@@ -80,13 +89,15 @@
 import { ref, onMounted, computed } from 'vue'
 import SideBar from '@renderer/components/sidebar/SideBar.vue'
 
+// 修改点 3：接口增加 is_deceased 字段
 interface Outstanding {
   id: number
   name: string
   year: string
   major: string
   image: string
-  description?: string 
+  description?: string
+  is_deceased?: boolean // 新增字段
 }
 
 const outstandings = ref<Outstanding[]>([])
@@ -141,7 +152,9 @@ onMounted(async () => {
       return {
         ...e,
         image: realImgUrl || '',
-        description: e.description || '暂无资料'
+        description: e.description || '暂无资料',
+        // 修改点 4：读取 JSON 中的 is_deceased 字段，默认为 false
+        is_deceased: !!e.is_deceased 
       }
     });
     let processedData = await Promise.all(imgUrlProcTask)
@@ -299,6 +312,14 @@ onMounted(async () => {
   font-weight: bold;
   margin: 0 0 4px 0;
   color: #333;
+}
+
+/* 修改点 5：添加示亡号（黑框）样式 */
+.deceased-frame {
+  border: 1px solid #333; /* 黑色实线框 */
+  padding: 0 4px;         /* 左右留出少许间隙 */
+  display: inline-block;  /* 确保边框贴合文字 */
+  line-height: normal;
 }
 
 .meta {
