@@ -425,7 +425,7 @@ onMounted(async () => {
 .modal-meta { font-size: 16px; color: #9E1F35; margin-bottom: 20px; }
 .modal-border { width: 40px; height: 4px; background: #9E1F35; margin-bottom: 30px; }
 .modal-desc-scroll { flex: 1; overflow-y: auto; padding-right: 10px; -webkit-overflow-scrolling: touch; } /* 开启 iOS 滚动回弹 */
-.modal-desc { font-size: 15px; line-height: 1.8; color: #555; text-align: justify; }
+.modal-desc { font-size: 15px; line-height: 1.8; color: #555; text-align: justify; white-space: pre-wrap; }
 
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
