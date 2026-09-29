@@ -2,6 +2,7 @@
 // - 宽度超过 1920px 的缩放到 1920px
 // - jpg/jpeg 以 quality 85 重新编码
 // - png 保持原格式，仅当超宽时缩放
+// 注意：.webp/.gif 暂不处理（app 支持展示，但本脚本不压缩它们）
 // 原图备份在 zip 中，此脚本直接覆盖 external 里的副本
 const fs = require('fs')
 const path = require('path')
@@ -15,11 +16,14 @@ function* walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, entry.name)
     if (entry.isDirectory()) yield* walk(p)
-    else if (EXTS.includes(path.extname(entry.name).toLowerCase())) yield p
+    else if (!entry.name.startsWith('.') && EXTS.includes(path.extname(entry.name).toLowerCase())) yield p
   }
 }
 
 async function main() {
+  if (!fs.existsSync(ROOT)) {
+    throw new Error(`未找到目录 ${ROOT}，请先拷贝 resources/external 数据`)
+  }
   let saved = 0
   for (const file of walk(ROOT)) {
     const meta = await sharp(file).metadata()
